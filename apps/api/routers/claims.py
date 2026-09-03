@@ -137,3 +137,70 @@ def submit_claim(claim_id: str, force_override: bool = False, db: Session = Depe
         "clearinghouse_trace_id": f"TRACE-{claim_id[:8].upper()}-837P",
         "submitted_at": datetime.utcnow().isoformat() + "Z",
     }
+
+
+@router.post("/{claim_id}/adjudicate", response_model=AdjudicationSchema)
+def adjudicate_claim(
+    claim_id: str,
+    outcome: str = Query("DENIED", description="Outcome to simulate: PAID, DENIED, UNDERPAID"),
+    carc_code: str = Query("CO-197", description="CARC code for denial or underpayment"),
+    billed_amount: float = Query(3200.00, ge=0),
+    paid_amount: float = Query(0.00, ge=0),
+    db: Session = Depends(get_db),
+):
+    """Simulates payer adjudication producing 835 ERA remittance and auto-ingests denial into Revenue Recovery."""
+    adj_status = outcome.upper()
+
+    if adj_status == "DENIED":
+        carc_desc = "Precertification/authorization/notification absent or unapproved." if carc_code == "CO-197" else "Claim lacks required billing details."
+        payer_paid = 0.00
+        contractual_adj = 0.00
+        allowed = 0.00
+    elif adj_status == "UNDERPAID":
+        carc_desc = "Charge exceeds fee schedule / maximum allowable amount."
+        payer_paid = paid_amount if paid_amount > 0 else billed_amount * 0.5
+        allowed = payer_paid
+        contractual_adj = billed_amount - payer_paid
+    else: # PAID
+        carc_desc = "Claim paid in full per fee schedule."
+        carc_code = "PR-1"
+        allowed = billed_amount
+        payer_paid = billed_amount
+        contractual_adj = 0.00
+
+    adj_res = AdjudicationSchema(
+        claim_id=claim_id,
+        adjudication_id=f"adj-{claim_id[:8]}",
+        status=adj_status,
+        billed_amount=billed_amount,
+        allowed_amount=allowed,
+        contractual_adjustment=contractual_adj,
+        payer_paid_amount=payer_paid,
+        patient_responsibility=0.00,
+        lines=[
+            {
+                "claim_line_id": f"line-{claim_id[:6]}-1",
+                "cpt_code": "72148",
+                "paid_amount": payer_paid,
+                "carc_code": carc_code if adj_status != "PAID" else None,
+                "carc_description": carc_desc if adj_status != "PAID" else None,
+                "rarc_code": "N56" if carc_code == "CO-197" else None,
+            }
+        ],
+    )
+
+    # Auto-ingest into Revenue Recovery engine if DENIED or UNDERPAID
+    if adj_status in ("DENIED", "UNDERPAID"):
+        from apps.api.routers.recovery import ingest_claim_into_recovery
+        ingest_claim_into_recovery(
+            claim_id=claim_id,
+            carc_code=carc_code,
+            carc_description=carc_desc,
+            billed_amount=billed_amount,
+            paid_amount=payer_paid,
+            patient_name="Marcus Thorne",
+            payer_name="UnitedHealthcare",
+            db=db,
+        )
+
+    return adj_res

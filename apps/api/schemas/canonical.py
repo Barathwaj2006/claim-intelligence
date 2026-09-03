@@ -1,4 +1,4 @@
-from typing import List, Optional, Generic, TypeVar, Any
+from typing import List, Optional, Generic, TypeVar, Any, Dict
 from datetime import datetime, date
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -198,12 +198,48 @@ class RecoveryCaseSchema(BaseModel):
     denial_carc: str
     denial_reason: str
     revenue_at_risk: float
+    expected_recovery_value: float = 0.0
+    recovered_amount: float = 0.0
+    remaining_amount: float = 0.0
     recoverability_score: int
     priority: str
     status: str
     recommended_action: str
+    explanation_why: Optional[str] = None
     filing_deadline: date
     days_remaining: int
+    evidence: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    audit_trail: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+
+
+class TransitionRequestSchema(BaseModel):
+    status: str
+    actor: Optional[str] = "Human User"
+    notes: Optional[str] = None
+
+
+class OutcomeRequestSchema(BaseModel):
+    recovered_amount: float
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AppealResponseSchema(BaseModel):
+    case_id: str
+    document_type: str
+    subject: str
+    content: str
+    created_at: str
+
+
+class RecoveryAnalyticsSchema(BaseModel):
+    total_cases: int
+    total_revenue_at_risk: float
+    expected_recoverable_value: float
+    total_recovered_amount: float
+    recovery_rate_percentage: float
+    priority_breakdown: Dict[str, int]
+    status_breakdown: Dict[str, int]
 
 
 class TopDenialReasonSchema(BaseModel):
