@@ -4,11 +4,16 @@ import { Link } from 'react-router-dom';
 import { useClaims } from '../context/ClaimContext';
 import { CreateClaimModal } from '../components/CreateClaimModal';
 import { ImportClaimsModal } from '../components/ImportClaimsModal';
+import { ExportDropdown } from '../components/ExportDropdown';
+import { PdfReportModal } from '../components/PdfReportModal';
+import { exportAnalyticsToCsv, PdfReportData } from '../utils/exportUtils';
 
 export const Analytics: React.FC = () => {
   const { claims, recoveryCases } = useClaims();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [pdfReportData, setPdfReportData] = useState<PdfReportData | null>(null);
 
   // Group user claims by payer
   const payerMap = new Map<
@@ -65,10 +70,87 @@ export const Analytics: React.FC = () => {
     };
   });
 
+  const handleExportCsv = () => {
+    exportAnalyticsToCsv(payerMetrics, 'payer_analytics_scorecard');
+  };
+
+  const handleExportPdf = () => {
+    const totalBilledAll = payerMetrics.reduce((s, p) => s + p.totalBilled, 0);
+    const totalClaimsAll = payerMetrics.reduce((s, p) => s + p.totalClaims, 0);
+    const totalCleanAll = payerMetrics.reduce((s, p) => s + p.cleanClaims, 0);
+    const totalHighRiskAll = payerMetrics.reduce((s, p) => s + p.highRiskClaims, 0);
+    const totalAppealsAll = payerMetrics.reduce((s, p) => s + p.appealsCount, 0);
+    const overallCleanRate = totalClaimsAll > 0 ? ((totalCleanAll / totalClaimsAll) * 100).toFixed(1) : '0';
+
+    const report: PdfReportData = {
+      title: 'Payer Intelligence & Performance Scorecard',
+      subtitle: `Pre-submission clean claim benchmarks, denial propensities, and appeal outcomes for ${payerMetrics.length} contracted payers.`,
+      reportCategory: 'PAYER_ANALYTICS',
+      generatedAt: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      kpis: [
+        {
+          label: 'Total Payer Exposure',
+          value: `$${totalBilledAll.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+          subtext: `${totalClaimsAll} Staged Claims`,
+        },
+        {
+          label: 'Overall Clean Rate',
+          value: `${overallCleanRate}%`,
+          subtext: `${totalCleanAll} Clean Submissions`,
+        },
+        {
+          label: 'Denial At-Risk',
+          value: `${totalHighRiskAll} Claims`,
+          subtext: 'High Risk Tier',
+        },
+        {
+          label: 'Total Appeals',
+          value: `${totalAppealsAll}`,
+          subtext: `${payerMetrics.length} Payers Monitored`,
+        },
+      ],
+      tableHeaders: [
+        'Payer Organization',
+        'Staged Claims',
+        'Total Billed',
+        'Clean Claim Rate',
+        'Denial Propensity',
+        'Appeals Logged',
+        'Appeal Win Rate',
+      ],
+      tableAlignments: ['left', 'center', 'right', 'center', 'center', 'center', 'center'],
+      tableRows: payerMetrics.map((p) => [
+        p.name,
+        p.totalClaims,
+        `$${p.totalBilled.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        `${p.cleanRate}%`,
+        `${p.denialPropensity}%`,
+        p.appealsCount,
+        p.appealWinRate !== null ? `${p.appealWinRate}%` : 'N/A',
+      ]),
+      footerNotes:
+        'Calculated deterministically from user claims and recovery records. Validated against HIPAA ANSI X12 5010 transactions.',
+    };
+
+    setPdfReportData(report);
+    setIsPdfModalOpen(true);
+  };
+
   return (
     <div className="space-y-6">
       <CreateClaimModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
       <ImportClaimsModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
+      <PdfReportModal
+        isOpen={isPdfModalOpen}
+        onClose={() => setIsPdfModalOpen(false)}
+        reportData={pdfReportData}
+      />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -81,6 +163,13 @@ export const Analytics: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {payerMetrics.length > 0 && (
+            <ExportDropdown
+              label="Export Analytics"
+              onExportCsv={handleExportCsv}
+              onExportPdf={handleExportPdf}
+            />
+          )}
           <button
             onClick={() => setIsImportOpen(true)}
             className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center gap-2"

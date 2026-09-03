@@ -1,20 +1,31 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Filter, Search, Plus, UploadCloud, Download, Trash2, FilePlus, AlertCircle } from 'lucide-react';
+import { Filter, Search, Plus, UploadCloud, Trash2, FilePlus, AlertCircle } from 'lucide-react';
 import { useClaims } from '../context/ClaimContext';
 import { CreateClaimModal } from '../components/CreateClaimModal';
 import { ImportClaimsModal } from '../components/ImportClaimsModal';
+import { ExportDropdown } from '../components/ExportDropdown';
+import { PdfReportModal } from '../components/PdfReportModal';
+import { exportClaimsToCsv, PdfReportData } from '../utils/exportUtils';
 
 export const ClaimsList: React.FC = () => {
   const { claims, deleteClaim } = useClaims();
   const [riskFilter, setRiskFilter] = useState<string>('ALL');
+  const [typeFilter, setTypeFilter] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [pdfReportData, setPdfReportData] = useState<PdfReportData | null>(null);
 
   const filteredClaims = claims.filter((claim) => {
     const matchesRisk =
       riskFilter === 'ALL' || claim.riskLevel === riskFilter;
+
+    const matchesType =
+      typeFilter === 'ALL' ||
+      (typeFilter === 'INSTITUTIONAL' && claim.claimType === 'INSTITUTIONAL') ||
+      (typeFilter === 'PROFESSIONAL' && claim.claimType !== 'INSTITUTIONAL');
 
     const query = searchQuery.toLowerCase().trim();
     const matchesQuery =
@@ -23,10 +34,85 @@ export const ClaimsList: React.FC = () => {
       claim.patientName.toLowerCase().includes(query) ||
       claim.memberId.toLowerCase().includes(query) ||
       claim.payerName.toLowerCase().includes(query) ||
-      claim.primaryDiagnosis.toLowerCase().includes(query);
+      claim.primaryDiagnosis.toLowerCase().includes(query) ||
+      (claim.drgCode && claim.drgCode.toLowerCase().includes(query));
 
-    return matchesRisk && matchesQuery;
+    return matchesRisk && matchesType && matchesQuery;
   });
+
+  const handleExportCsv = () => {
+    const exportSet = filteredClaims.length > 0 ? filteredClaims : claims;
+    exportClaimsToCsv(exportSet, 'claims_rcm_queue');
+  };
+
+  const handleExportPdf = () => {
+    const exportSet = filteredClaims.length > 0 ? filteredClaims : claims;
+    const totalBilled = exportSet.reduce((sum, c) => sum + (c.totalBilled || 0), 0);
+    const cleanClaims = exportSet.filter((c) => c.riskLevel === 'LOW').length;
+    const highRiskClaims = exportSet.filter((c) => c.riskLevel === 'HIGH').length;
+    const cleanRate = exportSet.length > 0 ? ((cleanClaims / exportSet.length) * 100).toFixed(1) : '0';
+
+    const report: PdfReportData = {
+      title: 'Pre-Submission Claims RCM Audit Report',
+      subtitle: `Official pre-clearinghouse evaluation of ${exportSet.length} staged claims (UB-04 & CMS-1500).`,
+      reportCategory: 'CLAIMS_QUEUE',
+      generatedAt: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      kpis: [
+        {
+          label: 'Total Value Staged',
+          value: `$${totalBilled.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+          subtext: `${exportSet.length} Total Claims`,
+        },
+        {
+          label: 'Clean Claim Rate',
+          value: `${cleanRate}%`,
+          subtext: `${cleanClaims} Low Risk Claims`,
+        },
+        {
+          label: 'Denial Risk Exposure',
+          value: `${highRiskClaims} High Risk`,
+          subtext: 'Requires Pre-Submission Fix',
+        },
+        {
+          label: 'Audit Standard',
+          value: 'HIPAA 5010',
+          subtext: 'UB-04 & CMS-1500 Ready',
+        },
+      ],
+      tableHeaders: [
+        'Claim #',
+        'Format',
+        'Patient / Member',
+        'Payer Organization',
+        'Diagnosis / CPT',
+        'Billed Amount',
+        'Risk Tier',
+        'Status',
+      ],
+      tableAlignments: ['left', 'center', 'left', 'left', 'left', 'right', 'center', 'center'],
+      tableRows: exportSet.map((c) => [
+        c.claimNumber,
+        c.claimType === 'INSTITUTIONAL' ? 'UB-04 (Inst)' : 'CMS-1500 (Prof)',
+        `${c.patientName} (${c.memberId})`,
+        c.payerName,
+        `${c.primaryDiagnosis} / ${c.lines?.[0]?.cpt || 'N/A'}`,
+        `$${c.totalBilled.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        `${c.riskScore} (${c.riskLevel})`,
+        c.status,
+      ]),
+      footerNotes:
+        'Report generated deterministically. High-risk claims are gated from submission until data quality or prior-auth discrepancies are remediated.',
+    };
+
+    setPdfReportData(report);
+    setIsPdfModalOpen(true);
+  };
 
   const handleExportJson = () => {
     const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(claims, null, 2));
@@ -43,24 +129,28 @@ export const ClaimsList: React.FC = () => {
       {/* Modals */}
       <CreateClaimModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
       <ImportClaimsModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
+      <PdfReportModal
+        isOpen={isPdfModalOpen}
+        onClose={() => setIsPdfModalOpen(false)}
+        reportData={pdfReportData}
+      />
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Pre-Submission Claims Queue</h2>
           <p className="text-sm text-slate-500 mt-1">
-            CMS-1500 professional claims scored for denial propensity prior to clearinghouse submission.
+            Institutional UB-04 and professional CMS-1500 claims scored for denial propensity prior to clearinghouse submission.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           {claims.length > 0 && (
-            <button
-              onClick={handleExportJson}
-              className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center gap-2"
-            >
-              <Download className="w-4 h-4 text-slate-500" />
-              <span>Export JSON</span>
-            </button>
+            <ExportDropdown
+              label="Export Queue"
+              onExportCsv={handleExportCsv}
+              onExportPdf={handleExportPdf}
+              onExportJson={handleExportJson}
+            />
           )}
           <button
             onClick={() => setIsImportOpen(true)}
@@ -97,6 +187,27 @@ export const ClaimsList: React.FC = () => {
                 }`}
               >
                 {rf}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 border-l border-slate-200 pl-4">
+            <span className="text-xs font-semibold text-slate-500">Format:</span>
+            {[
+              { id: 'ALL', label: 'All' },
+              { id: 'PROFESSIONAL', label: 'CMS-1500' },
+              { id: 'INSTITUTIONAL', label: 'UB-04' },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTypeFilter(t.id)}
+                className={`px-2.5 py-1 rounded-md text-xs font-semibold transition-colors ${
+                  typeFilter === t.id
+                    ? 'bg-indigo-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {t.label}
               </button>
             ))}
           </div>
@@ -184,8 +295,36 @@ export const ClaimsList: React.FC = () => {
 
                   return (
                     <tr key={claim.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-3 px-4 font-mono font-bold text-blue-600">
-                        {claim.claimNumber}
+                      <td className="py-3 px-4">
+                        <div className="font-mono font-bold text-blue-600">
+                          {claim.claimNumber}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span
+                            className={`text-[10px] font-bold px-1.5 py-0.2 rounded ${
+                              claim.claimType === 'INSTITUTIONAL'
+                                ? 'bg-indigo-100 text-indigo-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {claim.claimType === 'INSTITUTIONAL' ? 'UB-04 (Facility)' : 'CMS-1500'}
+                          </span>
+                          {claim.drgCode && (
+                            <span className="text-[10px] font-mono font-bold bg-amber-50 text-amber-800 border border-amber-200 px-1 rounded">
+                              DRG {claim.drgCode}
+                            </span>
+                          )}
+                          {claim.reconciliationStatus === 'MATCHED_PAID' && (
+                            <span className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 px-1 rounded">
+                              835 Paid
+                            </span>
+                          )}
+                          {claim.reconciliationStatus === 'DENIED_835' && (
+                            <span className="text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 px-1 rounded">
+                              835 Denied
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="font-semibold text-slate-900">{claim.patientName}</div>

@@ -1,0 +1,55 @@
+<svg viewBox="0 0 520 300" width="520" height="300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="520" height="300" rx="60" fill="#141416"/>
+  <defs>
+    <linearGradient id="goldFavicon" x1="60" y1="40" x2="460" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stopColor="#DFBA73" />
+      <stop offset="25%" stopColor="#FFF2BF" />
+      <stop offset="50%" stopColor="#C59E4E" />
+      <stop offset="75%" stopColor="#E9CA87" />
+      <stop offset="90%" stopColor="#A88132" />
+      <stop offset="100%" stopColor="#D4AF37" />
+    </linearGradient>
+    <filter id="goldGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+
+  <!-- Outer Shield Frame (Aligned on Center X=355, Y=150) -->
+  <path
+    d="M 355 42 L 441 78 L 441 150 C 441 204, 408 244, 355 258 C 302 244, 269 204, 269 150 L 269 78 Z"
+    stroke="url(#goldFavicon)"
+    stroke-width="8"
+    stroke-linejoin="round"
+    filter="url(#goldGlow)"
+  />
+
+  <!-- Inner Shield Frame -->
+  <path
+    d="M 355 56 L 427 88 L 427 150 C 427 196, 398 232, 355 244 C 312 232, 283 196, 283 150 L 283 88 Z"
+    stroke="url(#goldFavicon)"
+    stroke-width="6"
+    stroke-linejoin="round"
+    filter="url(#goldGlow)"
+  />
+
+  <!-- Outer Infinity Ribbon (Complete closed loop, right down-curve synced with shield tip at 355, 258) -->
+  <path
+    d="M 355 258 C 302 244, 275 186, 240 150 C 205 114, 170 84, 125 84 C 88.55 84, 59 113.55, 59 150 C 59 186.45, 88.55 216, 125 216 C 170 216, 205 186, 240 150 C 275 114, 310 84, 355 84 C 400 84, 441 110, 441 150 C 441 204, 408 244, 355 258 Z"
+    stroke="url(#goldFavicon)"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#goldGlow)"
+  />
+
+  <!-- Inner Infinity Ribbon (Complete closed loop, right down-curve synced with inner shield tip at 355, 244) -->
+  <path
+    d="M 355 244 C 312 232, 275 180, 240 150 C 205 120, 170 98, 125 98 C 96.28 98, 73 121.28, 73 150 C 73 178.72, 96.28 202, 125 202 C 170 202, 205 180, 240 150 C 275 120, 310 98, 355 98 C 390 98, 427 118, 427 150 C 427 196, 398 232, 355 244 Z"
+    stroke="url(#goldFavicon)"
+    stroke-width="6"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    filter="url(#goldGlow)"
+  />
+</svg>

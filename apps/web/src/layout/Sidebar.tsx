@@ -6,9 +6,15 @@ import {
   CheckCircle2,
   TrendingUp,
   BarChart3,
-  FileCheck2,
+  ShieldCheck,
+  Calculator,
+  Receipt,
+  Scale,
+  Stethoscope,
+  Building2,
 } from 'lucide-react';
 import { useClaims } from '../context/ClaimContext';
+import { InfinityShieldLogo } from '../components/InfinityShieldLogo';
 
 interface NavItemProps {
   to: string;
@@ -41,10 +47,12 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, badge }) => (
 );
 
 export const Sidebar: React.FC = () => {
-  const { claims, recoveryCases } = useClaims();
+  const { claims, recoveryCases, priorAuths, underpayments } = useClaims();
 
   const highRiskCount = claims.filter((c) => c.riskLevel === 'HIGH').length;
   const recoveryAtRisk = recoveryCases.reduce((sum, r) => sum + (r.revenueAtRisk || 0), 0);
+  const activeAuthCount = priorAuths.filter((p) => p.status === 'APPROVED' || p.status === 'IN_REVIEW').length;
+  const underpaymentCount = underpayments.filter((u) => u.status === 'DETECTED' || u.recoveryStatus === 'IDENTIFIED').length;
 
   const claimsBadge = highRiskCount > 0 ? `${highRiskCount} High` : undefined;
   const recoveryBadge =
@@ -54,10 +62,10 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 min-h-[calc(100vh-4rem)]">
-      <div className="p-4 space-y-6">
+      <div className="p-4 space-y-5 overflow-y-auto">
         <div className="space-y-1">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">
-            Operations
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5">
+            Core Operations
           </div>
           <NavItem to="/" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" />
           <NavItem
@@ -74,7 +82,46 @@ export const Sidebar: React.FC = () => {
         </div>
 
         <div className="space-y-1">
-          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5 flex items-center justify-between">
+            <span>Hospital RCM</span>
+            <Building2 className="w-3 h-3 text-slate-400" />
+          </div>
+          <NavItem
+            to="/prior-auth"
+            icon={<ShieldCheck className="w-4 h-4" />}
+            label="Prior Authorization"
+            badge={activeAuthCount > 0 ? activeAuthCount : undefined}
+          />
+          <NavItem
+            to="/drg-grouper"
+            icon={<Calculator className="w-4 h-4" />}
+            label="MS-DRG Grouper"
+          />
+          <NavItem
+            to="/remittance"
+            icon={<Receipt className="w-4 h-4" />}
+            label="835 Remittance Recon"
+          />
+          <NavItem
+            to="/contract-auditing"
+            icon={<FileSpreadsheet className="w-4 h-4" />}
+            label="Contract Underpayment"
+            badge={underpaymentCount > 0 ? underpaymentCount : undefined}
+          />
+          <NavItem
+            to="/cdi-copilot"
+            icon={<Stethoscope className="w-4 h-4" />}
+            label="CDI Clinical Copilot"
+          />
+          <NavItem
+            to="/good-faith-estimate"
+            icon={<Scale className="w-4 h-4" />}
+            label="Good Faith Estimates"
+          />
+        </div>
+
+        <div className="space-y-1">
+          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5">
             Revenue Recovery
           </div>
           <NavItem
@@ -91,13 +138,15 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 border-t border-slate-100 bg-slate-50/50 m-2 rounded-xl">
-        <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs mb-1">
-          <FileCheck2 className="w-4 h-4 text-blue-600" />
-          CMS-1500 & 837P Ready
+      <div className="p-3 border border-slate-200/70 bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white m-2 rounded-xl shadow-xs">
+        <div className="flex items-center gap-2.5 mb-1.5">
+          <InfinityShieldLogo size="xs" />
+          <span className="text-xs font-bold text-amber-300/90 tracking-wide">
+            AEGIS RCM ENGINE
+          </span>
         </div>
-        <p className="text-xs text-slate-500 leading-relaxed">
-          Standardized HIPAA EDI 5010 transactions with instant CARC crosswalking.
+        <p className="text-[10px] text-slate-400 leading-relaxed font-mono">
+          UB-04 & CMS-1500 pre-submission zero-defect telemetry active.
         </p>
       </div>
     </aside>

@@ -12,15 +12,32 @@ import {
   UploadCloud,
   CheckCircle2,
   Inbox,
+  ShieldCheck,
+  Receipt,
+  FileSpreadsheet,
+  Scale,
 } from 'lucide-react';
 import { useClaims } from '../context/ClaimContext';
 import { CreateClaimModal } from '../components/CreateClaimModal';
 import { ImportClaimsModal } from '../components/ImportClaimsModal';
 
 export const Dashboard: React.FC = () => {
-  const { claims, recoveryCases } = useClaims();
+  const {
+    claims,
+    recoveryCases,
+    priorAuths,
+    remittances,
+    underpayments,
+    goodFaithEstimates,
+  } = useClaims();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+
+  // Facility Operations KPIs
+  const activePriorAuths = priorAuths.filter((p) => p.status === 'APPROVED' || p.status === 'IN_REVIEW').length;
+  const totalRemittancePaid = remittances.reduce((s, r) => s + (r.paidAmount || r.paymentAmount || 0), 0);
+  const totalUnderpaymentLeakage = underpayments.reduce((s, u) => s + (u.varianceUnderpaid || u.underpaidAmount || 0), 0);
+  const totalGfeCreated = goodFaithEstimates.length;
 
   // Compute live metrics from user's claims
   const totalBilled = claims.reduce((sum, c) => sum + (c.totalBilled || 0), 0);
@@ -188,6 +205,84 @@ export const Dashboard: React.FC = () => {
               {wonAppealsCount} {wonAppealsCount === 1 ? 'appeal won' : 'appeals won'}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Hospital RCM Facility Operations Quick Bar */}
+      <div className="bg-slate-900 text-white rounded-xl p-4 shadow-sm border border-slate-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                Hospital Operations & Regulatory Modules
+              </h3>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">
+              Live facility intelligence across prior authorization, remittance reconciliation, contract auditing, and price transparency.
+            </p>
+          </div>
+          <div className="text-[11px] text-slate-400">
+            Institutional UB-04 & CMS-1500 Engine Active
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
+          <Link
+            to="/prior-auth"
+            className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-lg transition-colors border border-slate-700/50 block group"
+          >
+            <div className="flex items-center justify-between text-slate-400 group-hover:text-blue-400">
+              <span className="text-[11px] font-semibold">Prior Auths</span>
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="text-lg font-black text-white font-mono mt-1">
+              {activePriorAuths} <span className="text-[10px] font-normal text-slate-400">active</span>
+            </div>
+            <span className="text-[10px] text-slate-400">FHIR PAS & CMS SLA</span>
+          </Link>
+
+          <Link
+            to="/remittance"
+            className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-lg transition-colors border border-slate-700/50 block group"
+          >
+            <div className="flex items-center justify-between text-slate-400 group-hover:text-emerald-400">
+              <span className="text-[11px] font-semibold">835 Remittance</span>
+              <Receipt className="w-4 h-4" />
+            </div>
+            <div className="text-lg font-black text-emerald-400 font-mono mt-1">
+              ${totalRemittancePaid.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+            </div>
+            <span className="text-[10px] text-slate-400">{remittances.length} ERA batches</span>
+          </Link>
+
+          <Link
+            to="/contract-auditing"
+            className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-lg transition-colors border border-slate-700/50 block group"
+          >
+            <div className="flex items-center justify-between text-slate-400 group-hover:text-amber-400">
+              <span className="text-[11px] font-semibold">Underpayments</span>
+              <FileSpreadsheet className="w-4 h-4" />
+            </div>
+            <div className="text-lg font-black text-amber-400 font-mono mt-1">
+              ${totalUnderpaymentLeakage.toLocaleString('en-US', { minimumFractionDigits: 0 })}
+            </div>
+            <span className="text-[10px] text-slate-400">{underpayments.length} cases detected</span>
+          </Link>
+
+          <Link
+            to="/good-faith-estimate"
+            className="p-3 bg-slate-800/80 hover:bg-slate-800 rounded-lg transition-colors border border-slate-700/50 block group"
+          >
+            <div className="flex items-center justify-between text-slate-400 group-hover:text-purple-400">
+              <span className="text-[11px] font-semibold">GFE & NSA</span>
+              <Scale className="w-4 h-4" />
+            </div>
+            <div className="text-lg font-black text-white font-mono mt-1">
+              {totalGfeCreated} <span className="text-[10px] font-normal text-slate-400">estimates</span>
+            </div>
+            <span className="text-[10px] text-slate-400">No Surprises Act</span>
+          </Link>
         </div>
       </div>
 

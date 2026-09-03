@@ -228,6 +228,15 @@ export const ClaimDetail: React.FC = () => {
             </h2>
             <span
               className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                claim.claimType === 'INSTITUTIONAL'
+                  ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
+                  : 'bg-blue-100 text-blue-800 border border-blue-200'
+              }`}
+            >
+              {claim.claimType === 'INSTITUTIONAL' ? 'UB-04 / 837I Facility' : 'CMS-1500 / 837P'}
+            </span>
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
                 claim.riskLevel === 'HIGH'
                   ? 'bg-rose-100 text-rose-700'
                   : claim.riskLevel === 'MEDIUM'
@@ -285,6 +294,65 @@ export const ClaimDetail: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Institutional UB-04 Facility Parameters Banner */}
+      {claim.claimType === 'INSTITUTIONAL' && (
+        <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+              UB-04 (CMS-1450) Institutional Parameters & DRG Assignment
+            </h3>
+            <span className="text-[11px] font-mono font-bold bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded">
+              EDI 837I Inpatient Hospital
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs pt-1">
+            <div>
+              <span className="text-indigo-600 font-bold block">Type of Bill (FL 04):</span>
+              <span className="font-semibold text-slate-900">{claim.typeOfBill || '111 - Hospital Inpatient'}</span>
+            </div>
+            <div>
+              <span className="text-indigo-600 font-bold block">Admission Date (FL 12):</span>
+              <span className="font-semibold text-slate-900">{claim.admissionDate || claim.serviceDate}</span>
+            </div>
+            <div>
+              <span className="text-indigo-600 font-bold block">Admission Type (FL 14):</span>
+              <span className="font-semibold text-slate-900">{claim.admissionType || 'EMERGENCY'}</span>
+            </div>
+            <div>
+              <span className="text-indigo-600 font-bold block">Discharge Status (FL 17):</span>
+              <span className="font-semibold text-slate-900">{claim.dischargeStatus || '01 - Home/Self Care'}</span>
+            </div>
+          </div>
+
+          {claim.drgCode && (
+            <div className="bg-white p-3 rounded-lg border border-indigo-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-2">
+              <div>
+                <span className="text-[10px] text-indigo-500 font-bold uppercase block">CMS MS-DRG Grouping</span>
+                <div className="text-sm font-black text-indigo-900 font-mono">
+                  DRG {claim.drgCode} - {claim.drgTitle}
+                </div>
+              </div>
+              <div className="flex items-center gap-4 shrink-0">
+                {claim.drgWeight && (
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Relative Weight</span>
+                    <span className="font-mono font-bold text-slate-800 text-xs">{claim.drgWeight.toFixed(4)}</span>
+                  </div>
+                )}
+                {claim.inpatientLos && (
+                  <div className="text-right">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase block">Length of Stay</span>
+                    <span className="font-mono font-bold text-slate-800 text-xs">{claim.inpatientLos} Days</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Actionable Detected Issues & Pre-Submission Interventions */}
       {claim.detectedIssues && claim.detectedIssues.length > 0 ? (
@@ -386,7 +454,9 @@ export const ClaimDetail: React.FC = () => {
       <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center justify-between">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-            Service Line Items (CMS-1500 Section 24)
+            {claim.claimType === 'INSTITUTIONAL'
+              ? 'Institutional Revenue Codes & Line Items (UB-04 FL 42-47)'
+              : 'Service Line Items (CMS-1500 Section 24)'}
           </h3>
           <span className="text-xs text-slate-500 font-mono">
             {claim.lines?.length || 0} {claim.lines?.length === 1 ? 'Line Item' : 'Line Items'}
@@ -397,6 +467,9 @@ export const ClaimDetail: React.FC = () => {
             <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
               <tr>
                 <th className="py-2.5 px-4">Line #</th>
+                {claim.claimType === 'INSTITUTIONAL' && (
+                  <th className="py-2.5 px-4">Rev Code</th>
+                )}
                 <th className="py-2.5 px-4">CPT / HCPCS</th>
                 <th className="py-2.5 px-4">Description</th>
                 <th className="py-2.5 px-4 text-center">Units</th>
@@ -409,6 +482,11 @@ export const ClaimDetail: React.FC = () => {
               {claim.lines?.map((line) => (
                 <tr key={line.lineNo} className="hover:bg-slate-50/70 transition-colors">
                   <td className="py-3 px-4 font-mono font-bold text-slate-500">{line.lineNo}</td>
+                  {claim.claimType === 'INSTITUTIONAL' && (
+                    <td className="py-3 px-4 font-mono font-bold text-indigo-700">
+                      {line.revenueCode || '-'}
+                    </td>
+                  )}
                   <td className="py-3 px-4 font-mono font-bold text-blue-600">{line.cpt}</td>
                   <td className="py-3 px-4 text-slate-800 font-medium">{line.desc}</td>
                   <td className="py-3 px-4 text-center font-bold text-slate-700">{line.units}</td>
