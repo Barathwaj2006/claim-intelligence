@@ -6,13 +6,23 @@ router = APIRouter(prefix="/analytics", tags=["Analytics"])
 
 @router.get("/dashboard", response_model=DashboardAnalyticsSchema)
 def get_dashboard_metrics():
-    """Retrieve aggregate executive RCM dashboard KPIs."""
+    """Retrieve aggregate executive RCM dashboard KPIs dynamically including active recovery pipeline."""
+    from apps.api.routers.recovery import _RECOVERY_CASES_DB, _init_seed_cases
+    _init_seed_cases()
+
+    cases = list(_RECOVERY_CASES_DB.values())
+    dynamic_at_risk = sum(c["remaining_amount"] for c in cases)
+    dynamic_recovered = sum(c["recovered_amount"] for c in cases)
+
+    base_at_risk = 58300.00
+    base_recovered = 34200.00
+
     return DashboardAnalyticsSchema(
         total_claims=142,
         clean_claim_rate=84.5,
         total_billed_value=428900.00,
-        revenue_at_risk=58300.00,
-        recovered_revenue=34200.00,
+        revenue_at_risk=round(base_at_risk + dynamic_at_risk, 2),
+        recovered_revenue=round(base_recovered + dynamic_recovered, 2),
         risk_distribution={
             "low": 98,
             "medium": 28,

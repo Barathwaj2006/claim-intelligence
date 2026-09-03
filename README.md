@@ -19,7 +19,7 @@ An enterprise-grade Revenue Cycle Management (RCM) intelligence engine designed 
 - **Multi-Factor Denial Risk Scoring (0–100)**: Deterministic composite scoring across Eligibility, Auth, Coverage, Quality, and Timely Filing.
 - **Explainability & Projected CARC Codes**: Plain-English factor decomposition with actionable next-best-steps and predicted CARC/RARC codes.
 - **Simulated Clearinghouse & Payer Adjudication (EDI 835)**: Generates remittance advices with accurate mathematical accounting (Billed = Allowed + Contractual Adj; Allowed = Payer Paid + Patient Responsibility).
-- **Revenue Recovery & Automated Appeals**: Prioritizes post-adjudication denials and auto-generates formal clinical appeal dossiers.
+- **Revenue Recovery & Automated Appeals**: Converts denied, pended, and underpaid claims into structured recovery opportunities with deterministic recoverability scoring, priority matrix, expected recovery values, human approval controls, and automated clinical appeal dossiers.
 
 ---
 
