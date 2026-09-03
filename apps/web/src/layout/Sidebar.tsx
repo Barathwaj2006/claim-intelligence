@@ -14,7 +14,6 @@ import {
   Building2,
 } from 'lucide-react';
 import { useClaims } from '../context/ClaimContext';
-import { InfinityShieldLogo } from '../components/InfinityShieldLogo';
 
 interface NavItemProps {
   to: string;
@@ -27,19 +26,19 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, badge }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+      `flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
         isActive
-          ? 'bg-blue-50 text-blue-700 font-semibold shadow-xs'
+          ? 'bg-blue-50 text-blue-700 font-semibold'
           : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
       }`
     }
   >
-    <div className="flex items-center gap-3">
-      <span className="w-5 h-5 flex items-center justify-center">{icon}</span>
+    <div className="flex items-center gap-2.5">
+      <span className="w-4 h-4 flex items-center justify-center shrink-0">{icon}</span>
       <span>{label}</span>
     </div>
     {badge ? (
-      <span className="px-2 py-0.5 text-xs rounded-full font-bold bg-rose-100 text-rose-700">
+      <span className="px-1.5 py-0.5 text-[10px] rounded font-bold bg-slate-100 text-slate-700 border border-slate-200">
         {badge}
       </span>
     ) : null}
@@ -62,9 +61,10 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 min-h-[calc(100vh-4rem)]">
-      <div className="p-4 space-y-5 overflow-y-auto">
+      <div className="p-3.5 space-y-5 overflow-y-auto">
+        {/* Core Operations */}
         <div className="space-y-1">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1">
             Core Operations
           </div>
           <NavItem to="/" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" />
@@ -81,8 +81,9 @@ export const Sidebar: React.FC = () => {
           />
         </div>
 
+        {/* Hospital Facility Modules */}
         <div className="space-y-1">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5 flex items-center justify-between">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1 flex items-center justify-between">
             <span>Hospital RCM</span>
             <Building2 className="w-3 h-3 text-slate-400" />
           </div>
@@ -120,8 +121,9 @@ export const Sidebar: React.FC = () => {
           />
         </div>
 
+        {/* Revenue Recovery */}
         <div className="space-y-1">
-          <div className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5">
+          <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1">
             Revenue Recovery
           </div>
           <NavItem
@@ -138,16 +140,18 @@ export const Sidebar: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-3 border border-slate-200/70 bg-gradient-to-br from-slate-900 via-slate-950 to-black text-white m-2 rounded-xl shadow-xs">
-        <div className="flex items-center gap-2.5 mb-1.5">
-          <InfinityShieldLogo size="xs" />
-          <span className="text-xs font-bold text-amber-300/90 tracking-wide">
-            AEGIS RCM ENGINE
+      {/* Institutional Compliance Footer */}
+      <div className="p-3 bg-slate-50 border border-slate-200 m-3 rounded-lg text-slate-700">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span className="text-xs font-bold text-slate-800 tracking-wide">
+            Rules Engine Active
           </span>
         </div>
-        <p className="text-[10px] text-slate-400 leading-relaxed font-mono">
-          UB-04 & CMS-1500 pre-submission zero-defect telemetry active.
-        </p>
+        <div className="text-[11px] text-slate-500 space-y-0.5 font-mono">
+          <div>CMS-1500 & UB-04 (837P/I)</div>
+          <div className="text-slate-400">HIPAA 5010A1 · NPI / CPT Rules</div>
+        </div>
       </div>
     </aside>
   );

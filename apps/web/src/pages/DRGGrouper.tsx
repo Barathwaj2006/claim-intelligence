@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   Info,
   Layers,
-  Sparkles,
 } from 'lucide-react';
 import { useClaims } from '../context/ClaimContext';
 import { useNavigate } from 'react-router-dom';
@@ -472,93 +471,94 @@ export const DRGGrouper: React.FC = () => {
 
         {/* Right Col: Grouping Results Card */}
         <div className="space-y-6">
-          <div className="bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 text-white p-6 rounded-2xl shadow-xl space-y-6">
-            <div className="flex items-center justify-between border-b border-indigo-800/80 pb-4">
-              <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-indigo-400" />
+          <div className="bg-white text-slate-900 p-6 rounded-xl border border-slate-200 shadow-xs space-y-5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <Building2 className="w-4 h-4 text-indigo-600" />
                 Assigned MS-DRG Result
               </span>
-              <span className="px-2 py-0.5 rounded bg-indigo-800/80 text-indigo-200 text-[11px] font-mono font-bold">
+              <span className="px-2 py-0.5 rounded bg-indigo-50 border border-indigo-200 text-indigo-800 text-[11px] font-mono font-bold">
                 CMS v42.0
               </span>
             </div>
 
             <div>
-              <div className="text-3xl font-black font-mono text-white tracking-tight flex items-baseline gap-2">
+              <div className="text-2xl font-bold font-mono text-slate-900 tracking-tight flex items-baseline gap-2">
                 <span>MS-DRG {drgCode}</span>
               </div>
-              <p className="text-sm font-semibold text-indigo-200 mt-1.5 leading-snug">
+              <p className="text-sm font-semibold text-slate-700 mt-1 leading-snug">
                 {drgTitle}
               </p>
-              <div className="text-xs text-indigo-400 mt-1 font-mono">
+              <div className="text-xs text-slate-500 mt-1 font-mono">
                 {mdc}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <div className="bg-indigo-900/40 border border-indigo-800/60 p-3 rounded-xl">
-                <span className="text-[11px] text-indigo-300 uppercase font-bold block">Relative Weight</span>
-                <span className="text-xl font-black font-mono text-white mt-1 block">
+            <div className="grid grid-cols-2 gap-3 pt-1">
+              <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                <span className="text-[11px] text-slate-500 uppercase font-bold block">Relative Weight</span>
+                <span className="text-xl font-bold font-mono text-slate-900 mt-1 block">
                   {relativeWeight.toFixed(4)}
                 </span>
-                <span className="text-[10px] text-indigo-300 mt-0.5 block">National CMS Weight</span>
+                <span className="text-[10px] text-slate-500 mt-0.5 block">National CMS Weight</span>
               </div>
 
-              <div className="bg-indigo-900/40 border border-indigo-800/60 p-3 rounded-xl">
-                <span className="text-[11px] text-indigo-300 uppercase font-bold block">GMLOS Target</span>
-                <span className="text-xl font-black font-mono text-white mt-1 block">
-                  {gmlos} <span className="text-xs font-normal text-indigo-300">Days</span>
+              <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                <span className="text-[11px] text-slate-500 uppercase font-bold block">GMLOS Target</span>
+                <span className="text-xl font-bold font-mono text-slate-900 mt-1 block">
+                  {gmlos} <span className="text-xs font-normal text-slate-500">Days</span>
                 </span>
-                <span className="text-[10px] text-indigo-300 mt-0.5 block">Geometric Mean LOS</span>
+                <span className="text-[10px] text-slate-500 mt-0.5 block">Geometric Mean LOS</span>
               </div>
             </div>
 
-            <div className="bg-indigo-800/40 border border-indigo-700/60 p-4 rounded-xl space-y-2">
-              <div className="flex items-center justify-between text-xs text-indigo-200">
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg space-y-2.5">
+              <div className="flex items-center justify-between text-xs text-slate-600">
                 <span>Hospital Base Operating Rate:</span>
                 <input
                   type="number"
                   value={baseHospitalRate}
                   onChange={(e) => setBaseHospitalRate(Number(e.target.value) || 0)}
-                  className="w-24 px-2 py-0.5 bg-indigo-950 border border-indigo-700 text-right font-mono font-bold text-white rounded text-xs"
+                  className="w-24 px-2 py-1 bg-white border border-slate-300 text-right font-mono font-bold text-slate-900 rounded text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-hidden"
                 />
               </div>
-              <div className="flex items-center justify-between text-xs text-indigo-200">
+              <div className="flex items-center justify-between text-xs text-slate-600">
                 <span>Severity Tier:</span>
-                <span className="font-bold text-amber-300">{hasMcc ? 'MCC (Major Severity)' : hasCc ? 'CC (Moderate)' : 'Non-CC/MCC'}</span>
+                <span className="font-bold text-amber-700">{hasMcc ? 'MCC (Major Severity)' : hasCc ? 'CC (Moderate)' : 'Non-CC/MCC'}</span>
               </div>
-              <div className="border-t border-indigo-700/60 pt-2 flex items-center justify-between">
-                <span className="font-bold text-white text-xs">Estimated Medicare Base:</span>
-                <span className="text-xl font-black font-mono text-emerald-400">
+              <div className="border-t border-slate-200 pt-2 flex items-center justify-between">
+                <span className="font-bold text-slate-800 text-xs">Estimated Medicare Base:</span>
+                <span className="text-xl font-bold font-mono text-emerald-700">
                   ${estimatedReimbursement.toLocaleString()}
                 </span>
               </div>
             </div>
 
             {/* Stage parameters */}
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3 pt-1">
               <div>
-                <label className="block text-[11px] font-bold text-indigo-300 uppercase mb-1">Patient Name</label>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Patient Name</label>
                 <input
                   type="text"
                   value={patientName}
                   onChange={(e) => setPatientName(e.target.value)}
-                  className="w-full p-2 bg-indigo-950/60 border border-indigo-800 rounded-lg text-xs text-white font-semibold focus:outline-hidden focus:ring-1 focus:ring-indigo-400"
+                  className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 font-semibold focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-bold text-indigo-300 uppercase mb-1">Member / HICN ID</label>
+                <label className="block text-[11px] font-bold text-slate-700 uppercase mb-1">Member / HICN ID</label>
                 <input
                   type="text"
                   value={memberId}
                   onChange={(e) => setMemberId(e.target.value)}
-                  className="w-full p-2 bg-indigo-950/60 border border-indigo-800 rounded-lg text-xs text-white font-mono font-semibold focus:outline-hidden focus:ring-1 focus:ring-indigo-400"
+                  className="w-full p-2 bg-white border border-slate-300 rounded-lg text-xs text-slate-900 font-mono font-semibold focus:outline-hidden focus:ring-1 focus:ring-indigo-500"
                 />
               </div>
 
               <button
                 onClick={handleStageUB04Claim}
-                className="w-full py-3 bg-indigo-500 hover:bg-indigo-400 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-950/50 transition-all flex items-center justify-center gap-2"
+                disabled={!!stageSuccess}
+                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-emerald-600 text-white font-bold rounded-lg shadow-xs text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
               >
                 <Building2 className="w-4 h-4" />
                 <span>Stage Directly as UB-04 Claim</span>

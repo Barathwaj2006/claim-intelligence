@@ -227,21 +227,21 @@ export const ClaimDetail: React.FC = () => {
               {claim.claimNumber}
             </h2>
             <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+              className={`px-2.5 py-0.5 rounded text-xs font-bold ${
                 claim.claimType === 'INSTITUTIONAL'
-                  ? 'bg-indigo-100 text-indigo-800 border border-indigo-200'
-                  : 'bg-blue-100 text-blue-800 border border-blue-200'
+                  ? 'bg-indigo-50 text-indigo-800 border border-indigo-200'
+                  : 'bg-blue-50 text-blue-800 border border-blue-200'
               }`}
             >
               {claim.claimType === 'INSTITUTIONAL' ? 'UB-04 / 837I Facility' : 'CMS-1500 / 837P'}
             </span>
             <span
-              className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+              className={`px-2.5 py-0.5 rounded text-xs font-bold ${
                 claim.riskLevel === 'HIGH'
-                  ? 'bg-rose-100 text-rose-700'
+                  ? 'bg-rose-50 text-rose-700 border border-rose-200'
                   : claim.riskLevel === 'MEDIUM'
-                  ? 'bg-amber-100 text-amber-700'
-                  : 'bg-emerald-100 text-emerald-700'
+                  ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
               }`}
             >
               {claim.riskLevel} DENIAL RISK
@@ -273,24 +273,44 @@ export const ClaimDetail: React.FC = () => {
           </div>
         </div>
 
-        {/* Big Risk Meter */}
-        <div className="shrink-0 flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-          <div className="text-right">
-            <div className="text-xs font-semibold text-slate-500 uppercase">
-              Composite Denial Propensity
-            </div>
-            <div className="text-[11px] text-slate-400">Deterministic Rule Engine v1.0</div>
+        {/* Calibrated Actuarial Denial Risk Card */}
+        <div className="shrink-0 p-4 bg-slate-50 border border-slate-200 rounded-xl min-w-[220px]">
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="font-semibold text-slate-500 uppercase tracking-wider text-[10px]">
+              Denial Propensity
+            </span>
+            <span
+              className={`font-bold font-mono text-[11px] px-1.5 py-0.5 rounded ${
+                claim.riskLevel === 'HIGH'
+                  ? 'bg-rose-100 text-rose-800'
+                  : claim.riskLevel === 'MEDIUM'
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {claim.riskLevel}
+            </span>
           </div>
-          <div
-            className={`w-16 h-16 rounded-full flex items-center justify-center font-black text-lg border-4 ${
-              claim.riskLevel === 'HIGH'
-                ? 'border-rose-500 text-rose-700 bg-rose-50'
-                : claim.riskLevel === 'MEDIUM'
-                ? 'border-amber-500 text-amber-700 bg-amber-50'
-                : 'border-emerald-500 text-emerald-700 bg-emerald-50'
-            }`}
-          >
-            {claim.riskScore}
+          <div className="flex items-baseline gap-1.5 my-1">
+            <span className="text-3xl font-black font-mono text-slate-900">{claim.riskScore}</span>
+            <span className="text-xs font-mono text-slate-400">/ 100</span>
+          </div>
+          <div className="w-full bg-slate-200 rounded-full h-2 my-2 overflow-hidden">
+            <div
+              className={`h-2 rounded-full transition-all ${
+                claim.riskLevel === 'HIGH'
+                  ? 'bg-rose-500'
+                  : claim.riskLevel === 'MEDIUM'
+                  ? 'bg-amber-500'
+                  : 'bg-emerald-500'
+              }`}
+              style={{ width: `${claim.riskScore}%` }}
+            />
+          </div>
+          <div className="flex justify-between text-[10px] text-slate-400 font-mono">
+            <span>0 Clean</span>
+            <span>30 Med</span>
+            <span>70 High</span>
           </div>
         </div>
       </div>
@@ -300,7 +320,7 @@ export const ClaimDetail: React.FC = () => {
         <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-5 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-bold text-indigo-950 uppercase tracking-wider flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse" />
+              <span className="w-2 h-2 rounded-full bg-indigo-600" />
               UB-04 (CMS-1450) Institutional Parameters & DRG Assignment
             </h3>
             <span className="text-[11px] font-mono font-bold bg-indigo-100 text-indigo-800 px-2.5 py-0.5 rounded">
