@@ -1,4 +1,4 @@
-from typing import List, Optional, Generic, TypeVar, Any
+from typing import List, Optional, Generic, TypeVar, Any, Dict
 from datetime import datetime, date
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -47,6 +47,17 @@ class PayerSchema(BaseModel):
     payer_id: str
     timely_filing_days: int
     requires_auth_for_advanced_imaging: bool
+
+
+class InsurancePlanSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    payer_id: str
+    plan_name: str
+    plan_type: str
+    annual_deductible: float
+    copay_specialist: float
+    coinsurance_percentage: float
 
 
 class ClaimLineSchema(BaseModel):
@@ -125,6 +136,14 @@ class AuthorizationResultSchema(BaseModel):
     valid_through: Optional[date] = None
     warnings: List[str] = Field(default_factory=list)
     likely_carc: Optional[str] = None
+
+
+class CoverageResultSchema(BaseModel):
+    claim_id: str
+    coverage_status: str
+    medical_necessity_met: bool
+    frequency_limits_exceeded: bool
+    policy_notes: Optional[str] = None
 
 
 class RiskFactorSchema(BaseModel):
@@ -206,6 +225,15 @@ class RecoveryCaseSchema(BaseModel):
     days_remaining: int
 
 
+class AppealDocumentSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    recovery_case_id: str
+    document_type: str
+    content: str
+    created_at: datetime
+
+
 class TopDenialReasonSchema(BaseModel):
     carc: str
     description: str
@@ -219,5 +247,5 @@ class DashboardAnalyticsSchema(BaseModel):
     total_billed_value: float
     revenue_at_risk: float
     recovered_revenue: float
-    risk_distribution: dict
+    risk_distribution: Dict[str, Any]
     top_denial_reasons: List[TopDenialReasonSchema]

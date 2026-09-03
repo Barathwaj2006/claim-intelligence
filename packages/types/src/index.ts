@@ -3,6 +3,7 @@ export * from './payer';
 export * from './claim';
 export * from './eligibility';
 export * from './authorization';
+export * from './coverage';
 export * from './risk';
 export * from './adjudication';
 export * from './recovery';
