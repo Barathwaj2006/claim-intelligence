@@ -221,3 +221,28 @@ class DashboardAnalyticsSchema(BaseModel):
     recovered_revenue: float
     risk_distribution: dict
     top_denial_reasons: List[TopDenialReasonSchema]
+
+
+class ExplanationEvidenceSchema(BaseModel):
+    type: str = Field(..., description="FACT, INFERENCE, or RECOMMENDATION")
+    description: str
+    source_field: Optional[str] = None
+
+
+class ExplanationFactorSchema(BaseModel):
+    factor: str
+    contribution: int
+    severity: str = Field(..., description="LOW, MEDIUM, or HIGH")
+    evidence: List[ExplanationEvidenceSchema] = Field(default_factory=list)
+    source: str = Field(..., description="FACT or INFERENCE")
+
+
+class ExplanationResponseSchema(BaseModel):
+    summary: str
+    risk_score: int
+    risk_tier: str = Field(..., description="LOW, MEDIUM, or HIGH")
+    factors: List[ExplanationFactorSchema] = Field(default_factory=list)
+    recommendation: List[str] = Field(default_factory=list)
+    evidence: List[ExplanationEvidenceSchema] = Field(default_factory=list)
+    confidence: float
+    generated_at: datetime
