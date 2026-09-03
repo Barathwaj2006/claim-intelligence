@@ -91,7 +91,9 @@ export const ClaimsList: React.FC = () => {
             <button
               key={rf}
               onClick={() => setRiskFilter(rf)}
-              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${
+              aria-label={`Filter claims by ${rf === 'ALL' ? 'all risk levels' : rf.toLowerCase() + ' risk'}`}
+              aria-pressed={riskFilter === rf}
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none ${
                 riskFilter === rf
                   ? 'bg-blue-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
