@@ -1,4 +1,4 @@
-from typing import List, Optional, Generic, TypeVar, Any
+from typing import List, Optional, Generic, TypeVar, Any, Dict
 from datetime import datetime, date
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -127,6 +127,34 @@ class AuthorizationResultSchema(BaseModel):
     likely_carc: Optional[str] = None
 
 
+class CoverageVerificationRequest(BaseModel):
+    payer_id: Optional[str] = None
+    payer_name: Optional[str] = None
+    plan_id: Optional[str] = None
+    plan_type: Optional[str] = "PPO"
+    effective_date: Optional[date] = None
+    termination_date: Optional[date] = None
+    is_active: bool = True
+    cpt_code: str
+    diagnosis_code: Optional[str] = None
+    patient_dob: Optional[date] = None
+    patient_gender: Optional[str] = None
+    service_date: Optional[date] = None
+    units: int = 1
+
+
+class CoverageResultSchema(BaseModel):
+    claim_id: Optional[str] = None
+    coverage_status: str
+    reason: str
+    rule: str
+    evidence: Optional[dict] = Field(default_factory=dict)
+    verification_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    medical_necessity_met: bool = True
+    frequency_limits_exceeded: bool = False
+    policy_notes: Optional[str] = None
+
+
 class RiskFactorSchema(BaseModel):
     id: str
     category: str
@@ -188,6 +216,41 @@ class AdjudicationSchema(BaseModel):
     lines: List[AdjudicationLineSchema] = Field(default_factory=list)
 
 
+class ExplanationEvidenceSchema(BaseModel):
+    type: str = Field(default="FACT", description="FACT, INFERENCE, or RECOMMENDATION")
+    description: str
+    source_field: Optional[str] = None
+
+
+class ExplanationFactorSchema(BaseModel):
+    factor: str
+    contribution: int
+    severity: str = Field(default="MEDIUM", description="LOW, MEDIUM, or HIGH")
+    evidence: List[ExplanationEvidenceSchema] = Field(default_factory=list)
+    source: str = Field(default="FACT", description="FACT or INFERENCE")
+
+
+class ExplanationResponseSchema(BaseModel):
+    summary: str
+    risk_score: int
+    risk_tier: str = Field(default="LOW", description="LOW, MEDIUM, or HIGH")
+    factors: List[ExplanationFactorSchema] = Field(default_factory=list)
+    recommendation: List[str] = Field(default_factory=list)
+    evidence: List[ExplanationEvidenceSchema] = Field(default_factory=list)
+    confidence: float = 0.95
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class AuditTrailEntrySchema(BaseModel):
+    id: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    action: str
+    actor: str
+    details: str
+    previous_status: Optional[str] = None
+    new_status: Optional[str] = None
+
+
 class RecoveryCaseSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
@@ -198,12 +261,48 @@ class RecoveryCaseSchema(BaseModel):
     denial_carc: str
     denial_reason: str
     revenue_at_risk: float
+    expected_recovery_value: float = 0.0
+    recovered_amount: float = 0.0
+    remaining_amount: float = 0.0
     recoverability_score: int
     priority: str
     status: str
     recommended_action: str
+    explanation_why: Optional[str] = None
     filing_deadline: date
     days_remaining: int
+    evidence: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+    audit_trail: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
+
+
+class TransitionRequestSchema(BaseModel):
+    status: str
+    actor: Optional[str] = "Human User"
+    notes: Optional[str] = None
+
+
+class OutcomeRequestSchema(BaseModel):
+    recovered_amount: float
+    status: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class AppealResponseSchema(BaseModel):
+    case_id: str
+    document_type: str
+    subject: str
+    content: str
+    created_at: str
+
+
+class RecoveryAnalyticsSchema(BaseModel):
+    total_cases: int
+    total_revenue_at_risk: float
+    expected_recoverable_value: float
+    total_recovered_amount: float
+    recovery_rate_percentage: float
+    priority_breakdown: Dict[str, int]
+    status_breakdown: Dict[str, int]
 
 
 class TopDenialReasonSchema(BaseModel):

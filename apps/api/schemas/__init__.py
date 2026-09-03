@@ -17,6 +17,16 @@ from .canonical import (
     AdjudicationLineSchema,
     RecoveryCaseSchema,
     DashboardAnalyticsSchema,
+    CoverageVerificationRequest,
+    CoverageResultSchema,
+    TransitionRequestSchema,
+    OutcomeRequestSchema,
+    AppealResponseSchema,
+    RecoveryAnalyticsSchema,
+    ExplanationEvidenceSchema,
+    ExplanationFactorSchema,
+    ExplanationResponseSchema,
+    AuditTrailEntrySchema,
 )
 
 __all__ = [
@@ -38,4 +48,14 @@ __all__ = [
     "AdjudicationLineSchema",
     "RecoveryCaseSchema",
     "DashboardAnalyticsSchema",
+    "CoverageVerificationRequest",
+    "CoverageResultSchema",
+    "TransitionRequestSchema",
+    "OutcomeRequestSchema",
+    "AppealResponseSchema",
+    "RecoveryAnalyticsSchema",
+    "ExplanationEvidenceSchema",
+    "ExplanationFactorSchema",
+    "ExplanationResponseSchema",
+    "AuditTrailEntrySchema",
 ]

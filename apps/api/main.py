@@ -2,7 +2,18 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from apps.api.core.config import settings
-from apps.api.routers import health_router, claims_router, analytics_router
+from apps.api.routers import (
+    health_router,
+    claims_router,
+    analytics_router,
+    eligibility_router,
+    authorization_router,
+    coverage_router,
+    quality_router,
+    risk_router,
+    adjudication_router,
+    recovery_router,
+)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -43,6 +54,13 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.include_router(health_router, prefix=settings.API_V1_STR)
 app.include_router(claims_router, prefix=settings.API_V1_STR)
 app.include_router(analytics_router, prefix=settings.API_V1_STR)
+app.include_router(eligibility_router, prefix=settings.API_V1_STR)
+app.include_router(authorization_router, prefix=settings.API_V1_STR)
+app.include_router(coverage_router, prefix=settings.API_V1_STR)
+app.include_router(quality_router, prefix=settings.API_V1_STR)
+app.include_router(risk_router, prefix=settings.API_V1_STR)
+app.include_router(adjudication_router, prefix=settings.API_V1_STR)
+app.include_router(recovery_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
