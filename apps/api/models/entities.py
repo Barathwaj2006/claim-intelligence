@@ -63,13 +63,14 @@ class Payer(Base):
 
     plans: Mapped[List["InsurancePlan"]] = relationship("InsurancePlan", back_populates="payer")
     claims: Mapped[List["Claim"]] = relationship("Claim", back_populates="payer")
+    eligibility_checks: Mapped[List["EligibilityCheck"]] = relationship("EligibilityCheck", back_populates="payer")
 
 
 class InsurancePlan(Base):
     __tablename__ = "insurance_plans"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    payer_id: Mapped[str] = mapped_column(String(36), ForeignKey("payers.id"), nullable=False)
+    payer_id: Mapped[str] = mapped_column(String(36), ForeignKey("payers.id"), nullable=False, index=True)
     plan_name: Mapped[str] = mapped_column(String(150), nullable=False)
     plan_type: Mapped[str] = mapped_column(String(20), nullable=False, default="PPO")
     annual_deductible: Mapped[float] = mapped_column(Numeric(10, 2), default=1500.00)
@@ -83,8 +84,8 @@ class Encounter(Base):
     __tablename__ = "encounters"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    patient_id: Mapped[str] = mapped_column(String(36), ForeignKey("patients.id"), nullable=False)
-    provider_id: Mapped[str] = mapped_column(String(36), ForeignKey("providers.id"), nullable=False)
+    patient_id: Mapped[str] = mapped_column(String(36), ForeignKey("patients.id"), nullable=False, index=True)
+    provider_id: Mapped[str] = mapped_column(String(36), ForeignKey("providers.id"), nullable=False, index=True)
     service_date: Mapped[date] = mapped_column(Date, nullable=False)
     place_of_service: Mapped[str] = mapped_column(String(10), default="11")
     primary_diagnosis_code: Mapped[str] = mapped_column(String(20), nullable=False)
@@ -101,10 +102,10 @@ class Claim(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
     claim_number: Mapped[str] = mapped_column(String(50), nullable=False, unique=True, index=True)
-    patient_id: Mapped[str] = mapped_column(String(36), ForeignKey("patients.id"), nullable=False)
-    provider_id: Mapped[str] = mapped_column(String(36), ForeignKey("providers.id"), nullable=False)
-    payer_id: Mapped[str] = mapped_column(String(36), ForeignKey("payers.id"), nullable=False)
-    encounter_id: Mapped[str] = mapped_column(String(36), ForeignKey("encounters.id"), nullable=False)
+    patient_id: Mapped[str] = mapped_column(String(36), ForeignKey("patients.id"), nullable=False, index=True)
+    provider_id: Mapped[str] = mapped_column(String(36), ForeignKey("providers.id"), nullable=False, index=True)
+    payer_id: Mapped[str] = mapped_column(String(36), ForeignKey("payers.id"), nullable=False, index=True)
+    encounter_id: Mapped[str] = mapped_column(String(36), ForeignKey("encounters.id"), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(50), default="DRAFT", index=True)
     total_billed_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0.00)
     service_date: Mapped[date] = mapped_column(Date, nullable=False)
@@ -117,18 +118,18 @@ class Claim(Base):
     payer: Mapped["Payer"] = relationship("Payer", back_populates="claims")
     encounter: Mapped["Encounter"] = relationship("Encounter", back_populates="claim")
     lines: Mapped[List["ClaimLine"]] = relationship("ClaimLine", back_populates="claim", cascade="all, delete-orphan")
-    authorizations: Mapped[List["PriorAuthorization"]] = relationship("PriorAuthorization", back_populates="claim")
-    risk_scores: Mapped[List["RiskScore"]] = relationship("RiskScore", back_populates="claim")
-    corrections: Mapped[List["Correction"]] = relationship("Correction", back_populates="claim")
-    adjudications: Mapped[List["Adjudication"]] = relationship("Adjudication", back_populates="claim")
-    recovery_cases: Mapped[List["RecoveryCase"]] = relationship("RecoveryCase", back_populates="claim")
+    authorizations: Mapped[List["PriorAuthorization"]] = relationship("PriorAuthorization", back_populates="claim", cascade="all, delete-orphan")
+    risk_scores: Mapped[List["RiskScore"]] = relationship("RiskScore", back_populates="claim", cascade="all, delete-orphan")
+    corrections: Mapped[List["Correction"]] = relationship("Correction", back_populates="claim", cascade="all, delete-orphan")
+    adjudications: Mapped[List["Adjudication"]] = relationship("Adjudication", back_populates="claim", cascade="all, delete-orphan")
+    recovery_cases: Mapped[List["RecoveryCase"]] = relationship("RecoveryCase", back_populates="claim", cascade="all, delete-orphan")
 
 
 class ClaimLine(Base):
     __tablename__ = "claim_lines"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False)
+    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False, index=True)
     line_number: Mapped[int] = mapped_column(Integer, nullable=False)
     cpt_code: Mapped[str] = mapped_column(String(20), nullable=False)
     modifiers: Mapped[Optional[dict]] = mapped_column(JSON, default=list)
@@ -138,14 +139,15 @@ class ClaimLine(Base):
     total_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0.00)
 
     claim: Mapped["Claim"] = relationship("Claim", back_populates="lines")
+    adjudication_lines: Mapped[List["AdjudicationLine"]] = relationship("AdjudicationLine", back_populates="claim_line", cascade="all, delete-orphan")
 
 
 class EligibilityCheck(Base):
     __tablename__ = "eligibility_checks"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    patient_id: Mapped[str] = mapped_column(String(36), ForeignKey("patients.id"), nullable=False)
-    payer_id: Mapped[str] = mapped_column(String(36), ForeignKey("payers.id"), nullable=False)
+    patient_id: Mapped[str] = mapped_column(String(36), ForeignKey("patients.id"), nullable=False, index=True)
+    payer_id: Mapped[str] = mapped_column(String(36), ForeignKey("payers.id"), nullable=False, index=True)
     check_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     effective_date: Mapped[date] = mapped_column(Date, nullable=False)
@@ -156,13 +158,14 @@ class EligibilityCheck(Base):
     raw_response: Mapped[Optional[dict]] = mapped_column(JSON, default=dict)
 
     patient: Mapped["Patient"] = relationship("Patient", back_populates="eligibility_checks")
+    payer: Mapped["Payer"] = relationship("Payer", back_populates="eligibility_checks")
 
 
 class PriorAuthorization(Base):
     __tablename__ = "prior_authorizations"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False)
+    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False, index=True)
     cpt_code: Mapped[str] = mapped_column(String(20), nullable=False)
     authorization_number: Mapped[str] = mapped_column(String(50), nullable=False)
     status: Mapped[str] = mapped_column(String(30), default="APPROVED")
@@ -177,7 +180,7 @@ class RiskScore(Base):
     __tablename__ = "risk_scores"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False)
+    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False, index=True)
     overall_score: Mapped[int] = mapped_column(Integer, nullable=False)
     risk_level: Mapped[str] = mapped_column(String(20), nullable=False)
     eligibility_subscore: Mapped[int] = mapped_column(Integer, default=0)
@@ -194,7 +197,7 @@ class RiskFactor(Base):
     __tablename__ = "risk_factors"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    risk_score_id: Mapped[str] = mapped_column(String(36), ForeignKey("risk_scores.id"), nullable=False)
+    risk_score_id: Mapped[str] = mapped_column(String(36), ForeignKey("risk_scores.id"), nullable=False, index=True)
     impact_points: Mapped[int] = mapped_column(Integer, nullable=False)
     category: Mapped[str] = mapped_column(String(50), nullable=False)
     title: Mapped[str] = mapped_column(String(150), nullable=False)
@@ -208,7 +211,7 @@ class Correction(Base):
     __tablename__ = "corrections"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False)
+    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False, index=True)
     field_name: Mapped[str] = mapped_column(String(50), nullable=False)
     original_value: Mapped[str] = mapped_column(String(255), nullable=False)
     suggested_value: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -223,7 +226,7 @@ class Adjudication(Base):
     __tablename__ = "adjudications"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False)
+    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False, index=True)
     adjudication_date: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     status: Mapped[str] = mapped_column(String(30), nullable=False)
     billed_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0.00)
@@ -234,28 +237,30 @@ class Adjudication(Base):
 
     claim: Mapped["Claim"] = relationship("Claim", back_populates="adjudications")
     lines: Mapped[List["AdjudicationLine"]] = relationship("AdjudicationLine", back_populates="adjudication", cascade="all, delete-orphan")
+    recovery_cases: Mapped[List["RecoveryCase"]] = relationship("RecoveryCase", back_populates="adjudication")
 
 
 class AdjudicationLine(Base):
     __tablename__ = "adjudication_lines"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    adjudication_id: Mapped[str] = mapped_column(String(36), ForeignKey("adjudications.id"), nullable=False)
-    claim_line_id: Mapped[str] = mapped_column(String(36), nullable=False)
+    adjudication_id: Mapped[str] = mapped_column(String(36), ForeignKey("adjudications.id"), nullable=False, index=True)
+    claim_line_id: Mapped[str] = mapped_column(String(36), ForeignKey("claim_lines.id"), nullable=False, index=True)
     paid_amount: Mapped[float] = mapped_column(Numeric(10, 2), default=0.00)
     carc_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     carc_description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     rarc_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
     adjudication: Mapped["Adjudication"] = relationship("Adjudication", back_populates="lines")
+    claim_line: Mapped["ClaimLine"] = relationship("ClaimLine", back_populates="adjudication_lines")
 
 
 class RecoveryCase(Base):
     __tablename__ = "recovery_cases"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False)
-    adjudication_id: Mapped[str] = mapped_column(String(36), ForeignKey("adjudications.id"), nullable=False)
+    claim_id: Mapped[str] = mapped_column(String(36), ForeignKey("claims.id"), nullable=False, index=True)
+    adjudication_id: Mapped[str] = mapped_column(String(36), ForeignKey("adjudications.id"), nullable=False, index=True)
     revenue_at_risk: Mapped[float] = mapped_column(Numeric(10, 2), default=0.00)
     recoverability_score: Mapped[int] = mapped_column(Integer, default=50)
     priority: Mapped[str] = mapped_column(String(20), default="MEDIUM")
@@ -264,6 +269,7 @@ class RecoveryCase(Base):
     filing_deadline: Mapped[date] = mapped_column(Date, nullable=False)
 
     claim: Mapped["Claim"] = relationship("Claim", back_populates="recovery_cases")
+    adjudication: Mapped["Adjudication"] = relationship("Adjudication", back_populates="recovery_cases")
     appeal_documents: Mapped[List["AppealDocument"]] = relationship("AppealDocument", back_populates="recovery_case", cascade="all, delete-orphan")
 
 
@@ -271,7 +277,7 @@ class AppealDocument(Base):
     __tablename__ = "appeal_documents"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=generate_uuid)
-    recovery_case_id: Mapped[str] = mapped_column(String(36), ForeignKey("recovery_cases.id"), nullable=False)
+    recovery_case_id: Mapped[str] = mapped_column(String(36), ForeignKey("recovery_cases.id"), nullable=False, index=True)
     document_type: Mapped[str] = mapped_column(String(50), default="APPEAL_LETTER")
     content: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
