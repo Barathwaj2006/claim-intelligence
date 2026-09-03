@@ -8,6 +8,7 @@ import {
 
 export const Recovery: React.FC = () => {
   const [activeAppealModal, setActiveAppealModal] = useState<boolean>(false);
+  const [statusNotification, setStatusNotification] = useState<string | null>(null);
 
   const recoveryCases = [
     {
@@ -53,6 +54,18 @@ export const Recovery: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {statusNotification && (
+        <div className="bg-emerald-50 border border-emerald-300 text-emerald-900 px-4 py-3 rounded-xl flex items-center justify-between text-xs font-semibold shadow-xs">
+          <span>{statusNotification}</span>
+          <button
+            onClick={() => setStatusNotification(null)}
+            className="text-emerald-700 hover:text-emerald-900 font-bold ml-4"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -190,14 +203,16 @@ export const Recovery: React.FC = () => {
               </span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => alert('Appeal Packet PDF downloaded successfully.')}
+                  onClick={() => {
+                    setStatusNotification('Appeal Packet PDF dossier downloaded successfully.');
+                  }}
                   className="px-4 py-2 border border-slate-300 text-slate-700 font-semibold rounded-lg text-xs hover:bg-slate-50 flex items-center gap-1.5"
                 >
                   <Download className="w-4 h-4" /> Download PDF Dossier
                 </button>
                 <button
                   onClick={() => {
-                    alert('Appeal electronically submitted to Blue Cross Blue Shield Clearinghouse portal.');
+                    setStatusNotification('Appeal electronically submitted to Blue Cross Blue Shield Clearinghouse portal.');
                     setActiveAppealModal(false);
                   }}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs flex items-center gap-1.5 shadow-xs"

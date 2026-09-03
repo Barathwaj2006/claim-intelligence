@@ -1,0 +1,8 @@
+{
+  "name": "U.S. Healthcare Claim Intelligence Platform",
+  "description": "Pre-submission claim intelligence, denial prevention, and risk telemetry platform for healthcare providers.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
