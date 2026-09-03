@@ -188,41 +188,6 @@ class AdjudicationSchema(BaseModel):
     lines: List[AdjudicationLineSchema] = Field(default_factory=list)
 
 
-class RecoveryCaseSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    id: str
-    claim_id: str
-    claim_number: str
-    patient_name: str
-    payer_name: str
-    denial_carc: str
-    denial_reason: str
-    revenue_at_risk: float
-    recoverability_score: int
-    priority: str
-    status: str
-    recommended_action: str
-    filing_deadline: date
-    days_remaining: int
-
-
-class TopDenialReasonSchema(BaseModel):
-    carc: str
-    description: str
-    count: int
-    amount: float
-
-
-class DashboardAnalyticsSchema(BaseModel):
-    total_claims: int
-    clean_claim_rate: float
-    total_billed_value: float
-    revenue_at_risk: float
-    recovered_revenue: float
-    risk_distribution: dict
-    top_denial_reasons: List[TopDenialReasonSchema]
-
-
 class ExplanationEvidenceSchema(BaseModel):
     type: str = Field(..., description="FACT, INFERENCE, or RECOMMENDATION")
     description: str
@@ -246,3 +211,72 @@ class ExplanationResponseSchema(BaseModel):
     evidence: List[ExplanationEvidenceSchema] = Field(default_factory=list)
     confidence: float
     generated_at: datetime
+
+
+class AuditTrailEntrySchema(BaseModel):
+    id: str
+    timestamp: datetime
+    action: str
+    actor: str
+    details: str
+    previous_status: Optional[str] = None
+    new_status: Optional[str] = None
+
+
+class RecoveryActionRequestSchema(BaseModel):
+    action_type: str = Field(..., description="SUBMIT_APPEAL, SUBMIT_CORRECTED_CLAIM, WRITE_OFF")
+    approved_by: str
+    notes: Optional[str] = None
+    appeal_text_override: Optional[str] = None
+
+
+class RecoveryActionResponseSchema(BaseModel):
+    case_id: str
+    claim_id: str
+    action_type: str
+    status: str
+    outcome: str
+    recovered_amount: float
+    appeal_letter_markdown: Optional[str] = None
+    executed_at: datetime
+    audit_trail: List[AuditTrailEntrySchema] = Field(default_factory=list)
+
+
+class RecoveryCaseSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    claim_id: str
+    claim_number: str
+    patient_name: str
+    payer_name: str
+    denial_carc: str
+    denial_reason: str
+    revenue_at_risk: float
+    expected_recovery: float
+    recoverability_score: int
+    priority: str
+    status: str
+    root_cause: str
+    evidence: List[ExplanationEvidenceSchema] = Field(default_factory=list)
+    recommended_action: str
+    filing_deadline: date
+    days_remaining: int
+    appeal_letter_markdown: Optional[str] = None
+    audit_trail: List[AuditTrailEntrySchema] = Field(default_factory=list)
+
+
+class TopDenialReasonSchema(BaseModel):
+    carc: str
+    description: str
+    count: int
+    amount: float
+
+
+class DashboardAnalyticsSchema(BaseModel):
+    total_claims: int
+    clean_claim_rate: float
+    total_billed_value: float
+    revenue_at_risk: float
+    recovered_revenue: float
+    risk_distribution: dict
+    top_denial_reasons: List[TopDenialReasonSchema]
