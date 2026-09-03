@@ -8,6 +8,7 @@ import {
   BarChart3,
   FileCheck2,
 } from 'lucide-react';
+import { useClaims } from '../context/ClaimContext';
 
 interface NavItemProps {
   to: string;
@@ -31,15 +32,26 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, badge }) => (
       <span className="w-5 h-5 flex items-center justify-center">{icon}</span>
       <span>{label}</span>
     </div>
-    {badge && (
+    {badge ? (
       <span className="px-2 py-0.5 text-xs rounded-full font-bold bg-rose-100 text-rose-700">
         {badge}
       </span>
-    )}
+    ) : null}
   </NavLink>
 );
 
 export const Sidebar: React.FC = () => {
+  const { claims, recoveryCases } = useClaims();
+
+  const highRiskCount = claims.filter((c) => c.riskLevel === 'HIGH').length;
+  const recoveryAtRisk = recoveryCases.reduce((sum, r) => sum + (r.revenueAtRisk || 0), 0);
+
+  const claimsBadge = highRiskCount > 0 ? `${highRiskCount} High` : undefined;
+  const recoveryBadge =
+    recoveryAtRisk > 0
+      ? `$${recoveryAtRisk >= 1000 ? Math.round(recoveryAtRisk / 1000) + 'k' : recoveryAtRisk}`
+      : undefined;
+
   return (
     <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 min-h-[calc(100vh-4rem)]">
       <div className="p-4 space-y-6">
@@ -52,7 +64,7 @@ export const Sidebar: React.FC = () => {
             to="/claims"
             icon={<FileSpreadsheet className="w-4 h-4" />}
             label="Claims Queue"
-            badge="16 High"
+            badge={claimsBadge}
           />
           <NavItem
             to="/eligibility"
@@ -69,7 +81,7 @@ export const Sidebar: React.FC = () => {
             to="/recovery"
             icon={<TrendingUp className="w-4 h-4" />}
             label="Denials & Appeals"
-            badge="$58k"
+            badge={recoveryBadge}
           />
           <NavItem
             to="/analytics"

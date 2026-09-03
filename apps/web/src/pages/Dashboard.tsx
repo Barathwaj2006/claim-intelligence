@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   DollarSign,
@@ -7,12 +7,78 @@ import {
   ShieldAlert,
   ArrowUpRight,
   ExternalLink,
-  Clock,
+  Plus,
+  FilePlus,
+  UploadCloud,
+  CheckCircle2,
+  Inbox,
 } from 'lucide-react';
+import { useClaims } from '../context/ClaimContext';
+import { CreateClaimModal } from '../components/CreateClaimModal';
+import { ImportClaimsModal } from '../components/ImportClaimsModal';
 
 export const Dashboard: React.FC = () => {
+  const { claims, recoveryCases } = useClaims();
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+
+  // Compute live metrics from user's claims
+  const totalBilled = claims.reduce((sum, c) => sum + (c.totalBilled || 0), 0);
+  const lowRiskClaims = claims.filter((c) => c.riskLevel === 'LOW');
+  const mediumRiskClaims = claims.filter((c) => c.riskLevel === 'MEDIUM');
+  const highRiskClaims = claims.filter((c) => c.riskLevel === 'HIGH');
+
+  const cleanClaimRate =
+    claims.length > 0
+      ? ((lowRiskClaims.length / claims.length) * 100).toFixed(1)
+      : '0.0';
+
+  const revenueAtRisk = claims
+    .filter((c) => c.riskLevel === 'HIGH' || c.status === 'DENIED')
+    .reduce((sum, c) => sum + (c.totalBilled || 0), 0);
+
+  const recoveredRevenue = recoveryCases
+    .filter((r) => r.status === 'RECOVERED_PAID')
+    .reduce((sum, r) => sum + (r.revenueAtRisk || 0), 0);
+
+  const wonAppealsCount = recoveryCases.filter((r) => r.status === 'RECOVERED_PAID').length;
+
+  // Aggregate detected issues across claims
+  const issueMap = new Map<
+    string,
+    { carc: string; issue: string; count: number; exposure: number; claimId?: string }
+  >();
+
+  claims.forEach((claim) => {
+    claim.detectedIssues?.forEach((issue) => {
+      const existing = issueMap.get(issue.carc);
+      if (existing) {
+        existing.count += 1;
+        existing.exposure += claim.totalBilled || 0;
+      } else {
+        issueMap.set(issue.carc, {
+          carc: issue.carc,
+          issue: issue.issue,
+          count: 1,
+          exposure: claim.totalBilled || 0,
+          claimId: claim.id,
+        });
+      }
+    });
+  });
+
+  const topDenials = Array.from(issueMap.values());
+
+  const lowPct = claims.length > 0 ? Math.round((lowRiskClaims.length / claims.length) * 100) : 0;
+  const medPct = claims.length > 0 ? Math.round((mediumRiskClaims.length / claims.length) * 100) : 0;
+  const highPct = claims.length > 0 ? Math.round((highRiskClaims.length / claims.length) * 100) : 0;
+
   return (
     <div className="space-y-8">
+      {/* Modals */}
+      <CreateClaimModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} />
+      <ImportClaimsModal isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} />
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -21,14 +87,30 @@ export const Dashboard: React.FC = () => {
             Real-time pre-submission claim intelligence, denial prevention, and risk telemetry.
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link
-            to="/claims"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm transition-colors flex items-center gap-2"
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={() => setIsImportOpen(true)}
+            className="px-3.5 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center gap-2"
           >
-            <span>Review High-Risk Claims (16)</span>
-            <ArrowUpRight className="w-4 h-4" />
-          </Link>
+            <UploadCloud className="w-4 h-4 text-slate-500" />
+            <span>Import Data</span>
+          </button>
+          <button
+            onClick={() => setIsCreateOpen(true)}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-xs transition-colors flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>+ New Claim</span>
+          </button>
+          {highRiskClaims.length > 0 && (
+            <Link
+              to="/claims"
+              className="px-3.5 py-2 bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5"
+            >
+              <span>Review High-Risk ({highRiskClaims.length})</span>
+              <ArrowUpRight className="w-3.5 h-3.5" />
+            </Link>
+          )}
         </div>
       </div>
 
@@ -37,16 +119,18 @@ export const Dashboard: React.FC = () => {
         <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-xs">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-              Total Billed (M-T-D)
+              Total Billed
             </span>
             <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
               <DollarSign className="w-5 h-5" />
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-bold text-slate-900">$428,900.00</div>
-            <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-              <span className="text-emerald-600 font-semibold">+12.4%</span> vs last month
+            <div className="text-2xl font-bold text-slate-900 font-mono">
+              ${totalBilled.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">
+              {claims.length} {claims.length === 1 ? 'claim' : 'claims'} in staging
             </div>
           </div>
         </div>
@@ -61,9 +145,9 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-bold text-slate-900">84.5%</div>
-            <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-              <span className="text-emerald-600 font-semibold">+6.2%</span> post-rule engine
+            <div className="text-2xl font-bold text-slate-900 font-mono">{cleanClaimRate}%</div>
+            <div className="text-xs text-slate-500 mt-1">
+              {lowRiskClaims.length} of {claims.length} clean submissions
             </div>
           </div>
         </div>
@@ -78,8 +162,12 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-bold text-rose-600">$58,300.00</div>
-            <div className="text-xs text-slate-500 mt-1">16 claims pending fix</div>
+            <div className="text-2xl font-bold text-rose-600 font-mono">
+              ${revenueAtRisk.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">
+              {highRiskClaims.length} high-risk claims pending fix
+            </div>
           </div>
         </div>
 
@@ -93,8 +181,12 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
           <div className="mt-3">
-            <div className="text-2xl font-bold text-slate-900">$34,200.00</div>
-            <div className="text-xs text-slate-500 mt-1">8 appeals won this month</div>
+            <div className="text-2xl font-bold text-slate-900 font-mono">
+              ${recoveredRevenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
+            <div className="text-xs text-slate-500 mt-1">
+              {wonAppealsCount} {wonAppealsCount === 1 ? 'appeal won' : 'appeals won'}
+            </div>
           </div>
         </div>
       </div>
@@ -104,101 +196,134 @@ export const Dashboard: React.FC = () => {
         {/* Risk Distribution */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs lg:col-span-1">
           <h3 className="text-base font-bold text-slate-900 mb-4">Risk Distribution</h3>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-xs font-semibold mb-1">
-                <span className="text-emerald-700">Low Risk (0–29) - Clean Submission</span>
-                <span className="text-slate-600">98 claims (69%)</span>
+          {claims.length === 0 ? (
+            <div className="py-8 text-center text-slate-400">
+              <Inbox className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+              <p className="text-xs font-medium">No claims recorded yet.</p>
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Staged claims will be analyzed and scored into risk tiers.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="text-emerald-700">Low Risk (0–29) - Clean Submission</span>
+                  <span className="text-slate-600">
+                    {lowRiskClaims.length} ({lowPct}%)
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2.5">
+                  <div
+                    className="bg-emerald-500 h-2.5 rounded-full transition-all"
+                    style={{ width: `${lowPct}%` }}
+                  ></div>
+                </div>
               </div>
-              <div className="w-full bg-slate-100 rounded-full h-2.5">
-                <div className="bg-emerald-500 h-2.5 rounded-full" style={{ width: '69%' }}></div>
+
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="text-amber-700">Medium Risk (30–69) - Review Suggested</span>
+                  <span className="text-slate-600">
+                    {mediumRiskClaims.length} ({medPct}%)
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2.5">
+                  <div
+                    className="bg-amber-500 h-2.5 rounded-full transition-all"
+                    style={{ width: `${medPct}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-1">
+                  <span className="text-rose-700">High Risk (70–100) - Action Required</span>
+                  <span className="text-slate-600">
+                    {highRiskClaims.length} ({highPct}%)
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2.5">
+                  <div
+                    className="bg-rose-500 h-2.5 rounded-full transition-all"
+                    style={{ width: `${highPct}%` }}
+                  ></div>
+                </div>
               </div>
             </div>
+          )}
 
-            <div>
-              <div className="flex justify-between text-xs font-semibold mb-1">
-                <span className="text-amber-700">Medium Risk (30–69) - Review Suggested</span>
-                <span className="text-slate-600">28 claims (20%)</span>
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-2.5">
-                <div className="bg-amber-500 h-2.5 rounded-full" style={{ width: '20%' }}></div>
-              </div>
-            </div>
-
-            <div>
-              <div className="flex justify-between text-xs font-semibold mb-1">
-                <span className="text-rose-700">High Risk (70–100) - Action Required</span>
-                <span className="text-slate-600">16 claims (11%)</span>
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-2.5">
-                <div className="bg-rose-500 h-2.5 rounded-full" style={{ width: '11%' }}></div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 pt-5 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-slate-400" />
-            <span>Refreshed 2 minutes ago against payer clearinghouse</span>
+          <div className="mt-6 pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between">
+            <span>Deterministic Rule Engine</span>
+            <span className="font-semibold text-slate-700">
+              {claims.length} {claims.length === 1 ? 'Claim' : 'Claims'} Evaluated
+            </span>
           </div>
         </div>
 
         {/* Top Denial Drivers */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-xs lg:col-span-2">
-          <h3 className="text-base font-bold text-slate-900 mb-4">Top Projected Denial Causes (Pre-Submission)</h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
-                <tr>
-                  <th className="py-2.5 px-3">CARC Code</th>
-                  <th className="py-2.5 px-3">Denial Description</th>
-                  <th className="py-2.5 px-3 text-center">Claims</th>
-                  <th className="py-2.5 px-3 text-right">Exposure</th>
-                  <th className="py-2.5 px-3 text-center">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                <tr className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3 px-3 font-mono font-bold text-rose-600">CO-197</td>
-                  <td className="py-3 px-3 font-medium text-slate-800">
-                    Prior authorization absent (e.g. Lumbar MRI, Knee Arthroscopy)
-                  </td>
-                  <td className="py-3 px-3 text-center font-bold text-slate-700">9</td>
-                  <td className="py-3 px-3 text-right font-bold text-slate-900">$28,400.00</td>
-                  <td className="py-3 px-3 text-center">
-                    <span className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold cursor-pointer hover:bg-blue-100">
-                      Attach Auth
-                    </span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3 px-3 font-mono font-bold text-amber-600">CO-16</td>
-                  <td className="py-3 px-3 font-medium text-slate-800">
-                    Lacks info / Demographic typo (e.g. BlueShild OCR typo)
-                  </td>
-                  <td className="py-3 px-3 text-center font-bold text-slate-700">5</td>
-                  <td className="py-3 px-3 text-right font-bold text-slate-900">$14,200.00</td>
-                  <td className="py-3 px-3 text-center">
-                    <span className="px-2 py-0.5 rounded bg-amber-50 text-amber-700 font-semibold cursor-pointer hover:bg-amber-100">
-                      Auto-Correct
-                    </span>
-                  </td>
-                </tr>
-                <tr className="hover:bg-slate-50/70 transition-colors">
-                  <td className="py-3 px-3 font-mono font-bold text-rose-600">CO-29</td>
-                  <td className="py-3 px-3 font-medium text-slate-800">
-                    Timely filing deadline expiring within 7 days
-                  </td>
-                  <td className="py-3 px-3 text-center font-bold text-slate-700">2</td>
-                  <td className="py-3 px-3 text-right font-bold text-slate-900">$15,700.00</td>
-                  <td className="py-3 px-3 text-center">
-                    <span className="px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-semibold cursor-pointer hover:bg-rose-100">
-                      Expedite
-                    </span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <h3 className="text-base font-bold text-slate-900 mb-4">
+            Top Projected Denial Causes (Pre-Submission)
+          </h3>
+          {topDenials.length === 0 ? (
+            <div className="py-10 text-center text-slate-400">
+              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-400" />
+              <p className="text-xs font-semibold text-slate-700">
+                {claims.length === 0
+                  ? 'No claims available to analyze.'
+                  : 'Zero pre-submission denial risks detected!'}
+              </p>
+              <p className="text-[11px] text-slate-400 mt-1">
+                {claims.length === 0
+                  ? 'Create or import claims to identify missing authorizations or coding mismatches.'
+                  : 'All staged claims satisfy payer compliance checks.'}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                  <tr>
+                    <th className="py-2.5 px-3">CARC Code</th>
+                    <th className="py-2.5 px-3">Denial Description</th>
+                    <th className="py-2.5 px-3 text-center">Claims</th>
+                    <th className="py-2.5 px-3 text-right">Exposure</th>
+                    <th className="py-2.5 px-3 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {topDenials.map((denial) => (
+                    <tr key={denial.carc} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-3 px-3 font-mono font-bold text-rose-600">{denial.carc}</td>
+                      <td className="py-3 px-3 font-medium text-slate-800">{denial.issue}</td>
+                      <td className="py-3 px-3 text-center font-bold text-slate-700">{denial.count}</td>
+                      <td className="py-3 px-3 text-right font-bold text-slate-900 font-mono">
+                        ${denial.exposure.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="py-3 px-3 text-center">
+                        {denial.claimId ? (
+                          <Link
+                            to={`/claims/${denial.claimId}`}
+                            className="px-2 py-0.5 rounded bg-blue-50 text-blue-700 font-semibold hover:bg-blue-100 inline-block"
+                          >
+                            Resolve
+                          </Link>
+                        ) : (
+                          <Link
+                            to="/claims"
+                            className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 inline-block"
+                          >
+                            Review
+                          </Link>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
@@ -209,81 +334,109 @@ export const Dashboard: React.FC = () => {
             <h3 className="text-base font-bold text-slate-900">Active Claims Queue</h3>
             <p className="text-xs text-slate-500">Claims staged for pre-submission intelligence scoring</p>
           </div>
-          <Link
-            to="/claims"
-            className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
-          >
-            View all 142 claims <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
+          {claims.length > 0 && (
+            <Link
+              to="/claims"
+              className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            >
+              View all {claims.length} claims <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          )}
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4">Claim #</th>
-                <th className="py-3 px-4">Patient</th>
-                <th className="py-3 px-4">Payer</th>
-                <th className="py-3 px-4">Service Date</th>
-                <th className="py-3 px-4 text-right">Billed Amount</th>
-                <th className="py-3 px-4 text-center">Risk Score</th>
-                <th className="py-3 px-4 text-center">Status</th>
-                <th className="py-3 px-4 text-center">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              <tr className="hover:bg-slate-50/70">
-                <td className="py-3 px-4 font-mono font-bold text-blue-600">CLM-2026-00102</td>
-                <td className="py-3 px-4 font-medium text-slate-800">Marcus Thorne</td>
-                <td className="py-3 px-4 text-slate-600">UnitedHealthcare</td>
-                <td className="py-3 px-4 text-slate-600">2026-08-20</td>
-                <td className="py-3 px-4 text-right font-bold text-slate-900">$3,200.00</td>
-                <td className="py-3 px-4 text-center">
-                  <span className="px-2.5 py-1 rounded-full font-bold bg-rose-100 text-rose-700">
-                    85 / 100
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-center">
-                  <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
-                    DRAFT
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-center">
-                  <Link
-                    to="/claims/clm-002"
-                    className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium shadow-xs"
-                  >
-                    Inspect
-                  </Link>
-                </td>
-              </tr>
-              <tr className="hover:bg-slate-50/70">
-                <td className="py-3 px-4 font-mono font-bold text-blue-600">CLM-2026-00101</td>
-                <td className="py-3 px-4 font-medium text-slate-800">Eleanor Vance</td>
-                <td className="py-3 px-4 text-slate-600">Blue Cross Blue Shield</td>
-                <td className="py-3 px-4 text-slate-600">2026-08-15</td>
-                <td className="py-3 px-4 text-right font-bold text-slate-900">$1,450.00</td>
-                <td className="py-3 px-4 text-center">
-                  <span className="px-2.5 py-1 rounded-full font-bold bg-emerald-100 text-emerald-700">
-                    18 / 100
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-center">
-                  <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-medium border border-emerald-200">
-                    READY
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-center">
-                  <Link
-                    to="/claims/clm-001"
-                    className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded font-medium"
-                  >
-                    Inspect
-                  </Link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+
+        {claims.length === 0 ? (
+          <div className="p-10 text-center">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+              <FilePlus className="w-6 h-6" />
+            </div>
+            <h4 className="text-sm font-bold text-slate-800">No Claims in Queue</h4>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 mb-5">
+              The platform evaluates your claims against CMS-1500, ICD-10, CPT prior authorization,
+              and payer rules in real time. Enter your first claim or import data to get started.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                onClick={() => setIsCreateOpen(true)}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow-sm transition-colors flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>+ Create First Claim</span>
+              </button>
+              <Link
+                to="/eligibility"
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-2"
+              >
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                <span>Verify Patient Eligibility</span>
+              </Link>
+              <button
+                onClick={() => setIsImportOpen(true)}
+                className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-bold rounded-lg transition-colors flex items-center gap-2"
+              >
+                <UploadCloud className="w-4 h-4 text-slate-500" />
+                <span>Import JSON</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4">Claim #</th>
+                  <th className="py-3 px-4">Patient</th>
+                  <th className="py-3 px-4">Payer</th>
+                  <th className="py-3 px-4">Service Date</th>
+                  <th className="py-3 px-4 text-right">Billed Amount</th>
+                  <th className="py-3 px-4 text-center">Risk Score</th>
+                  <th className="py-3 px-4 text-center">Status</th>
+                  <th className="py-3 px-4 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {claims.slice(0, 5).map((claim) => (
+                  <tr key={claim.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-3 px-4 font-mono font-bold text-blue-600">
+                      {claim.claimNumber}
+                    </td>
+                    <td className="py-3 px-4 font-medium text-slate-800">{claim.patientName}</td>
+                    <td className="py-3 px-4 text-slate-600">{claim.payerName}</td>
+                    <td className="py-3 px-4 text-slate-600">{claim.serviceDate}</td>
+                    <td className="py-3 px-4 text-right font-bold text-slate-900 font-mono">
+                      ${claim.totalBilled.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span
+                        className={`px-2.5 py-1 rounded-full font-bold text-[11px] ${
+                          claim.riskLevel === 'HIGH'
+                            ? 'bg-rose-100 text-rose-700'
+                            : claim.riskLevel === 'MEDIUM'
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-emerald-100 text-emerald-700'
+                        }`}
+                      >
+                        {claim.riskScore} / 100
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium text-[11px]">
+                        {claim.status}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-center">
+                      <Link
+                        to={`/claims/${claim.id}`}
+                        className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded font-medium shadow-xs inline-block"
+                      >
+                        Inspect
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
