@@ -127,6 +127,34 @@ class AuthorizationResultSchema(BaseModel):
     likely_carc: Optional[str] = None
 
 
+class CoverageVerificationRequest(BaseModel):
+    payer_id: Optional[str] = None
+    payer_name: Optional[str] = None
+    plan_id: Optional[str] = None
+    plan_type: Optional[str] = "PPO"
+    effective_date: Optional[date] = None
+    termination_date: Optional[date] = None
+    is_active: bool = True
+    cpt_code: str
+    diagnosis_code: Optional[str] = None
+    patient_dob: Optional[date] = None
+    patient_gender: Optional[str] = None
+    service_date: Optional[date] = None
+    units: int = 1
+
+
+class CoverageResultSchema(BaseModel):
+    claim_id: Optional[str] = None
+    coverage_status: str
+    reason: str
+    rule: str
+    evidence: Optional[dict] = Field(default_factory=dict)
+    verification_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    medical_necessity_met: bool = True
+    frequency_limits_exceeded: bool = False
+    policy_notes: Optional[str] = None
+
+
 class RiskFactorSchema(BaseModel):
     id: str
     category: str
