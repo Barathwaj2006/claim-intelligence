@@ -11,7 +11,11 @@ from apps.api.schemas.canonical import (
     AuthorizationResultSchema,
     RiskScoreSchema,
     AdjudicationSchema,
+    ExplanationResponseSchema,
+    RiskFactorSchema,
+    RiskSubscoresSchema,
 )
+from apps.api.services.explainability import generate_claim_explanation
 
 router = APIRouter(prefix="/claims", tags=["Claims"])
 
@@ -125,6 +129,67 @@ def get_claim_detail(claim_id: str, db: Session = Depends(get_db)):
         risk_score=85,
         risk_level="HIGH",
     )
+
+
+@router.get("/{claim_id}/explain", response_model=ExplanationResponseSchema)
+def explain_claim_risk(claim_id: str, db: Session = Depends(get_db)):
+    """Generate human-readable explanation and factor decomposition for a claim's risk score."""
+    claim = get_claim_detail(claim_id, db)
+
+    # Construct corresponding risk score object matching claim detail
+    if claim.risk_score and claim.risk_score >= 60:
+        risk_score = RiskScoreSchema(
+            claim_id=claim_id,
+            overall_score=claim.risk_score,
+            risk_level=claim.risk_level or "HIGH",
+            subscores=RiskSubscoresSchema(
+                eligibility=0,
+                authorization=45,
+                coverage=20,
+                data_quality=10,
+                timely_filing=10,
+                provider_network=0,
+            ),
+            factors=[
+                RiskFactorSchema(
+                    id="rf-01",
+                    category="AUTHORIZATION",
+                    impact_points=35,
+                    title="Missing Prior Authorization",
+                    description=f"Payer policy requires prior authorization for procedure code 72148 under {claim.payer_name}. No valid authorization record found.",
+                    likely_carc_code="CO-197",
+                    recommended_fix="Obtain prior authorization from payer or submit retro-authorization request before claim submission.",
+                ),
+                RiskFactorSchema(
+                    id="rf-02",
+                    category="COVERAGE",
+                    impact_points=15,
+                    title="Medical Necessity Verification Warning",
+                    description="Primary diagnosis code M54.5 requires documentation of persistent symptoms (> 6 weeks) for CPT 72148.",
+                    likely_carc_code="CO-50",
+                    recommended_fix="Attach clinical encounter notes verifying conservative treatment history.",
+                ),
+            ],
+            calculated_at=datetime.utcnow(),
+        )
+    else:
+        risk_score = RiskScoreSchema(
+            claim_id=claim_id,
+            overall_score=claim.risk_score or 15,
+            risk_level=claim.risk_level or "LOW",
+            subscores=RiskSubscoresSchema(
+                eligibility=0,
+                authorization=0,
+                coverage=5,
+                data_quality=5,
+                timely_filing=5,
+                provider_network=0,
+            ),
+            factors=[],
+            calculated_at=datetime.utcnow(),
+        )
+
+    return generate_claim_explanation(claim, risk_score)
 
 
 @router.post("/{claim_id}/submit")
