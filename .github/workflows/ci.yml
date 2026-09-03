@@ -49,7 +49,9 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          npm ci
+          cd apps/web && npm install --no-save @rollup/rollup-linux-x64-gnu
 
       - name: Verify TypeScript & Build Bundle
         working-directory: apps/web
