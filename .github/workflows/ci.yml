@@ -46,10 +46,9 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
-          cache-dependency-path: apps/web/package-lock.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install frontend dependencies
-        working-directory: apps/web
+      - name: Install dependencies
         run: npm ci
 
       - name: Verify TypeScript & Build Bundle
