@@ -1,0 +1,150 @@
+[
+  {
+    "id": "clm-001",
+    "claim_number": "CLM-2026-00101",
+    "patient": {
+      "first_name": "Eleanor",
+      "last_name": "Vance",
+      "dob": "1990-03-24",
+      "gender": "FEMALE",
+      "member_id": "BCBS-98231011"
+    },
+    "provider": {
+      "name": "Dr. Sarah Connor, MD",
+      "npi": "1234567890",
+      "taxonomy": "207Q00000X",
+      "in_network": true
+    },
+    "payer_id": "pyr-001",
+    "payer_name": "Blue Cross Blue Shield",
+    "service_date": "2026-08-15",
+    "filing_deadline": "2026-11-15",
+    "primary_diagnosis": "Z00.00",
+    "secondary_diagnoses": [],
+    "total_billed_amount": 1450.00,
+    "status": "READY_FOR_SUBMISSION",
+    "lines": [
+      {
+        "line_number": 1,
+        "cpt_code": "99213",
+        "modifiers": [],
+        "units": 1,
+        "unit_price": 250.00,
+        "total_amount": 250.00,
+        "requires_auth": false,
+        "auth_status": "NOT_REQUIRED"
+      },
+      {
+        "line_number": 2,
+        "cpt_code": "36415",
+        "modifiers": [],
+        "units": 1,
+        "unit_price": 45.00,
+        "total_amount": 45.00,
+        "requires_auth": false,
+        "auth_status": "NOT_REQUIRED"
+      }
+    ],
+    "risk_score": 18,
+    "risk_level": "LOW",
+    "scenario": "Clean preventive / established office encounter with active coverage."
+  },
+  {
+    "id": "clm-002",
+    "claim_number": "CLM-2026-00102",
+    "patient": {
+      "first_name": "Marcus",
+      "last_name": "Thorne",
+      "dob": "1978-04-12",
+      "gender": "MALE",
+      "member_id": "UHC-44912033"
+    },
+    "provider": {
+      "name": "Dr. Gregory House, MD",
+      "npi": "1982736450",
+      "taxonomy": "207X00000X",
+      "in_network": true
+    },
+    "payer_id": "pyr-002",
+    "payer_name": "UnitedHealthcare",
+    "service_date": "2026-08-20",
+    "filing_deadline": "2026-11-20",
+    "primary_diagnosis": "M54.5",
+    "secondary_diagnoses": ["M54.16"],
+    "total_billed_amount": 3200.00,
+    "status": "DRAFT",
+    "lines": [
+      {
+        "line_number": 1,
+        "cpt_code": "72148",
+        "modifiers": ["LT"],
+        "units": 1,
+        "unit_price": 2800.00,
+        "total_amount": 2800.00,
+        "requires_auth": true,
+        "auth_status": "MISSING"
+      },
+      {
+        "line_number": 2,
+        "cpt_code": "99214",
+        "modifiers": ["25"],
+        "units": 1,
+        "unit_price": 400.00,
+        "total_amount": 400.00,
+        "requires_auth": false,
+        "auth_status": "NOT_REQUIRED"
+      }
+    ],
+    "risk_score": 85,
+    "risk_level": "HIGH",
+    "projected_carc": "CO-197",
+    "scenario": "High-risk missing prior auth on Lumbar Spine MRI (72148)."
+  },
+  {
+    "id": "clm-003",
+    "claim_number": "CLM-2026-00103",
+    "patient": {
+      "first_name": "Sarah",
+      "last_name": "Jenkins",
+      "dob": "1954-11-09",
+      "gender": "FEMALE",
+      "member_id": "MED-1EG4-TE9-MK72"
+    },
+    "provider": {
+      "name": "Dr. Meredith Grey, MD",
+      "npi": "1457892341",
+      "taxonomy": "207Q00000X",
+      "in_network": true
+    },
+    "payer_id": "pyr-003",
+    "payer_name": "Traditional Medicare Part B",
+    "service_date": "2026-08-10",
+    "filing_deadline": "2027-08-10",
+    "primary_diagnosis": "I10",
+    "secondary_diagnoses": ["E11.9"],
+    "total_billed_amount": 680.00,
+    "status": "ADJUDICATED",
+    "lines": [
+      {
+        "line_number": 1,
+        "cpt_code": "99214",
+        "modifiers": [],
+        "units": 1,
+        "unit_price": 680.00,
+        "total_amount": 680.00,
+        "requires_auth": false,
+        "auth_status": "NOT_REQUIRED"
+      }
+    ],
+    "risk_score": 12,
+    "risk_level": "LOW",
+    "adjudication": {
+      "status": "PAID",
+      "allowed": 185.00,
+      "contractual_adj": 495.00,
+      "payer_paid": 148.00,
+      "patient_resp": 37.00
+    },
+    "scenario": "Adjudicated clean Medicare Part B payment with standard 80/20 split."
+  }
+]

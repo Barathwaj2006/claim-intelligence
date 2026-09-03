@@ -1,0 +1,35 @@
+{
+  "payer_adjudication_rules": {
+    "missing_authorization": {
+      "outcome": "DENIED",
+      "carc": "CO-197",
+      "carc_description": "Precertification/authorization/notification/pre-treatment absent",
+      "rarc": "N56",
+      "allowed_multiplier": 0.0,
+      "payer_paid_multiplier": 0.0
+    },
+    "timely_filing_exceeded": {
+      "outcome": "DENIED",
+      "carc": "CO-29",
+      "carc_description": "The time limit for filing has expired",
+      "allowed_multiplier": 0.0,
+      "payer_paid_multiplier": 0.0
+    },
+    "clean_commercial_claim": {
+      "outcome": "PAID",
+      "carc_adjustment": "CO-45",
+      "allowed_rate": 0.70,
+      "contractual_discount_rate": 0.30,
+      "patient_coinsurance_rate": 0.20,
+      "payer_payment_rate": 0.80
+    },
+    "clean_medicare_part_b": {
+      "outcome": "PAID",
+      "carc_adjustment": "CO-45",
+      "allowed_rate": 0.60,
+      "contractual_discount_rate": 0.40,
+      "patient_coinsurance_rate": 0.20,
+      "payer_payment_rate": 0.80
+    }
+  }
+}

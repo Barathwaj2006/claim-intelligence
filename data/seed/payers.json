@@ -1,0 +1,50 @@
+[
+  {
+    "id": "pyr-001",
+    "name": "Blue Cross Blue Shield",
+    "payer_id": "00123",
+    "timely_filing_days": 180,
+    "requires_auth_for_advanced_imaging": true,
+    "electronic_submission_cutoff_days": 180
+  },
+  {
+    "id": "pyr-002",
+    "name": "UnitedHealthcare",
+    "payer_id": "00430",
+    "timely_filing_days": 90,
+    "requires_auth_for_advanced_imaging": true,
+    "electronic_submission_cutoff_days": 90
+  },
+  {
+    "id": "pyr-003",
+    "name": "Traditional Medicare Part B",
+    "payer_id": "00020",
+    "timely_filing_days": 365,
+    "requires_auth_for_advanced_imaging": false,
+    "electronic_submission_cutoff_days": 365
+  },
+  {
+    "id": "pyr-004",
+    "name": "Aetna Commercial",
+    "payer_id": "60054",
+    "timely_filing_days": 120,
+    "requires_auth_for_advanced_imaging": true,
+    "electronic_submission_cutoff_days": 120
+  },
+  {
+    "id": "pyr-005",
+    "name": "Cigna Healthcare",
+    "payer_id": "62308",
+    "timely_filing_days": 180,
+    "requires_auth_for_advanced_imaging": true,
+    "electronic_submission_cutoff_days": 180
+  },
+  {
+    "id": "pyr-006",
+    "name": "Humana Health Plan",
+    "payer_id": "61101",
+    "timely_filing_days": 90,
+    "requires_auth_for_advanced_imaging": true,
+    "electronic_submission_cutoff_days": 90
+  }
+]

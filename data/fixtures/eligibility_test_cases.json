@@ -1,0 +1,27 @@
+[
+  {
+    "case_name": "Active BCBS PPO",
+    "payer_id": "00123",
+    "member_id": "BCBS-98231011",
+    "service_date": "2026-08-15",
+    "expected_is_active": true,
+    "expected_copay": 35.00,
+    "expected_deductible_remaining": 300.00
+  },
+  {
+    "case_name": "Terminated Coverage",
+    "payer_id": "00430",
+    "member_id": "UHC-99001122",
+    "service_date": "2026-08-20",
+    "termination_date": "2026-06-30",
+    "expected_is_active": false,
+    "expected_carc": "CO-27"
+  },
+  {
+    "case_name": "Invalid Member ID Syntax",
+    "payer_id": "00123",
+    "member_id": "INVALID",
+    "expected_is_active": false,
+    "expected_carc": "CO-16"
+  }
+]
