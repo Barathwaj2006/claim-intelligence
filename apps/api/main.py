@@ -2,7 +2,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from apps.api.core.config import settings
-from apps.api.routers import health_router, claims_router, analytics_router
+from apps.api.routers import health_router, claims_router, analytics_router, quality_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -42,6 +42,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Mount Subsystem Routers
 app.include_router(health_router, prefix=settings.API_V1_STR)
 app.include_router(claims_router, prefix=settings.API_V1_STR)
+app.include_router(quality_router, prefix=settings.API_V1_STR)
 app.include_router(analytics_router, prefix=settings.API_V1_STR)
 
 
